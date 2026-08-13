@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npx ng build --configuration production
+RUN node --max-old-space-size=2048 node_modules/@angular/cli/bin/ng.js build --configuration production
 
 FROM nginx:alpine
 COPY --from=builder /app/dist/rsalgotrainer/browser /usr/share/nginx/html

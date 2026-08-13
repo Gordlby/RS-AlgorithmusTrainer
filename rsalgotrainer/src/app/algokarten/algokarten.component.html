@@ -1,0 +1,42 @@
+<div class="wrap">
+  @if (total() === 0) {
+    <div class="empty-note">Noch keine Knoten für Karteikarten.</div>
+  } @else {
+    @if (currentNode(); as node) {
+      <div class="card-area">
+        <div class="card-counter">KARTE {{ cardIdx() + 1 }} / {{ total() }}</div>
+
+        <div class="flashcard" (click)="flip()">
+          @if (!showBack()) {
+            <div class="front">
+              <p>
+                @if (node.key) { <strong [style.color]="node.color">{{ node.key }}</strong> — }
+                {{ node.text || '(ohne Text)' }}
+                <br>
+                <span class="hint">Fragen/Checks & Verzweigung?</span>
+              </p>
+              <div class="tap-hint">Tippen zum Umdrehen</div>
+            </div>
+          } @else {
+            <div class="back">
+              <ul>
+                @for (f of node.facts; track $index) {
+                  @if (f.trim()) { <li>{{ f }}</li> }
+                }
+                @for (line of branchInfo(node); track $index) {
+                  <li>{{ line }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+
+        <div class="card-controls">
+          <button (click)="prev()">← Zurück</button>
+          <button (click)="shuffle()">Mischen</button>
+          <button (click)="next()">Weiter →</button>
+        </div>
+      </div>
+    }
+  }
+</div>

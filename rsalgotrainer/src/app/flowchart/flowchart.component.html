@@ -1,0 +1,74 @@
+<div class="wrap">
+  @if (fc && fc.nodes.length > 0) {
+    <div class="flow-scroll">
+      <div class="flow-canvas"
+           [style.width.px]="canvasSize.width"
+           [style.height.px]="canvasSize.height">
+
+        <svg #flowSvg
+             [attr.width]="canvasSize.width"
+             [attr.height]="canvasSize.height"
+             class="flow-svg">
+        </svg>
+
+        @for (item of layoutNodes; track item.node.id) {
+          <div class="fnode fnode-{{ item.node.type }}"
+               [attr.data-id]="item.node.id"
+               [class.selected]="selectedNode()?.id === item.node.id"
+               [style.left.px]="item.left"
+               [style.top.px]="item.top"
+               [style.border-color]="item.node.color"
+               (click)="selectNode(item.node)">
+            @if (item.node.key) {
+              <span class="fnode-key">{{ item.node.key }}</span>
+            }
+            <span class="fnode-text">{{ item.node.text || '(ohne Text)' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Node detail panel -->
+    <div class="node-detail">
+      @if (selectedNode(); as node) {
+        <h3>{{ node.key ? node.key + ' — ' : '' }}{{ node.text || '(ohne Text)' }}</h3>
+
+        @if (node.facts.length > 0) {
+          <h4>Fragen / Checks</h4>
+          <ul>
+            @for (f of node.facts; track $index) {
+              @if (f.trim()) { <li>{{ f }}</li> }
+            }
+          </ul>
+        }
+
+        @if (node.type === 'decision') {
+          <h4>Zweige</h4>
+          <ul>
+            @for (b of node.branches; track b.id) {
+              <li>{{ b.label || '—' }} → {{ b.targetId ? nodeLabel(b.targetId) : 'Ende' }}</li>
+            }
+          </ul>
+        } @else if (node.type !== 'end') {
+          <h4>Weiter</h4>
+          <p>{{ nextLabel(node) }}</p>
+        }
+
+        @if (node.type === 'link') {
+          @if (node.linkedFlowchartId && data.flowcharts()[node.linkedFlowchartId]) {
+            <button class="btn primary" (click)="openLinkedFc(node.linkedFlowchartId!)">
+              → Algorithmus öffnen: {{ linkedFcTitle(node.linkedFlowchartId) }}
+            </button>
+          } @else {
+            <p class="muted">Verknüpfter Algorithmus wurde gelöscht.</p>
+          }
+        }
+      } @else {
+        <div class="empty-note">Klicke auf einen Knoten für Details.</div>
+      }
+    </div>
+
+  } @else {
+    <div class="empty-note">Noch keine Knoten. Leg im Editor welche an.</div>
+  }
+</div>

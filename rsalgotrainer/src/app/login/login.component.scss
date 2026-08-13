@@ -1,0 +1,53 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: #111;
+  border: 1px solid #2a3a32;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 360px;
+  max-width: 90vw;
+
+  h2 { margin: 0 0 1.2rem; font-size: 1.2rem; color: #ccff33; }
+}
+
+.mode-tabs {
+  display: flex; gap: .5rem; margin-bottom: 1.2rem;
+
+  button {
+    flex: 1; padding: .5rem;
+    background: #1a2a22; border: 1px solid #2a3a32; border-radius: 6px;
+    color: #8a9e96; cursor: pointer; font-size: .85rem;
+    &.active { background: #ccff33; color: #0c1310; border-color: #ccff33; font-weight: 700; }
+  }
+}
+
+label {
+  display: flex; flex-direction: column; gap: .35rem;
+  font-size: .8rem; color: #8a9e96; margin-bottom: .9rem;
+
+  input {
+    background: #0c1310; border: 1px solid #2a3a32; border-radius: 6px;
+    color: #e0ede8; padding: .55rem .75rem; font-size: .9rem;
+    &:focus { outline: none; border-color: #ccff33; }
+  }
+}
+
+.error { color: #ff4d3d; font-size: .8rem; margin: -.4rem 0 .8rem; }
+
+.actions {
+  display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1rem;
+}
+
+.btn {
+  padding: .5rem 1.1rem; border-radius: 6px;
+  border: 1px solid #2a3a32; background: #1a2a22; color: #e0ede8;
+  cursor: pointer; font-size: .85rem;
+  &.primary { background: #ccff33; color: #0c1310; border-color: #ccff33; font-weight: 700; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}

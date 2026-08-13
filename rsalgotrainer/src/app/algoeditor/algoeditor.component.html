@@ -1,0 +1,118 @@
+<div class="wrap">
+  @if (data.currentFc(); as fc) {
+    <input class="fc-title-input"
+           [value]="fc.title"
+           placeholder="Titel des Algorithmus"
+           [class.pending-field]="pendingTitleChanged()"
+           (input)="onTitleChange($event)">
+
+    <div #stepsContainer>
+      @for (node of fc.nodes; track node.id) {
+        <div class="step-card"
+             draggable="true"
+             [attr.data-node-id]="node.id"
+             (dragstart)="onDragStart(node.id)"
+             (dragover)="onDragOver($event, node.id)"
+             (dragend)="onDragEnd()">
+
+          <!-- Head row -->
+          <div class="step-head">
+            <select class="type-select" (change)="onTypeChange(node.id, $event)">
+              @for (t of typeLabels; track t.value) {
+                <option [value]="t.value" [selected]="t.value === node.type">{{ t.label }}</option>
+              }
+            </select>
+
+            <input class="key-input"
+                   [value]="node.key"
+                   maxlength="4"
+                   placeholder="Kürzel"
+                   (input)="onKeyChange(node.id, $event)">
+
+            <input class="title-input"
+                   [value]="node.text"
+                   [class.pending-field]="pendingNodeIds().has(node.id)"
+                   placeholder="Text / Frage"
+                   (input)="onTextChange(node.id, $event)">
+
+            <div class="swatches">
+              @for (color of palette; track color) {
+                <span class="swatch"
+                      [class.sel]="node.color === color"
+                      [style.background]="color"
+                      (click)="onColorChange(node.id, color)">
+                </span>
+              }
+            </div>
+
+            <button class="del-step" title="Löschen" (click)="onDeleteNode(node.id)">✕</button>
+          </div>
+
+          <!-- Link target selector -->
+          @if (node.type === 'link') {
+            <div class="link-select-wrap">
+              <select class="link-select" (change)="onLinkedFcChange(node.id, $event)">
+                <option value="" [selected]="!node.linkedFlowchartId">— Algorithmus wählen —</option>
+                @for (other of otherFlowcharts(); track other.id) {
+                  <option [value]="other.id" [selected]="other.id === node.linkedFlowchartId">{{ other.title }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <!-- Branches -->
+          @if (node.type === 'end') {
+            <p class="save-note">Endpunkt — keine Fortsetzung.</p>
+          } @else {
+            <div class="branches-list">
+              @for (branch of node.branches; track branch.id) {
+                <div class="branch-row">
+                  @if (node.type === 'decision') {
+                    <input class="branch-label-input"
+                           [value]="branch.label"
+                           placeholder="z.B. Ja"
+                           (input)="onBranchLabelChange(node.id, branch.id, $event)">
+                  } @else {
+                    <span class="branch-static-label">Weiter zu</span>
+                  }
+                  <select class="branch-target-select"
+                          (change)="onBranchTargetChange(node.id, branch.id, $event)">
+                    <option value="" [selected]="!branch.targetId">— Ende / kein Ziel —</option>
+                    @for (opt of nodeTargetOptions(node.id); track opt.id) {
+                      <option [value]="opt.id" [selected]="opt.id === branch.targetId">{{ opt.label }}</option>
+                    }
+                  </select>
+                  @if (node.type === 'decision') {
+                    <button class="del-branch" (click)="onDeleteBranch(node.id, branch.id)">✕</button>
+                  }
+                </div>
+              }
+            </div>
+            @if (node.type === 'decision') {
+              <button class="add-branch-btn" (click)="onAddBranch(node.id)">+ Zweig hinzufügen</button>
+            }
+          }
+
+          <!-- Facts -->
+          <div class="facts-list">
+            @for (fact of node.facts; track $index) {
+              <div class="fact-row">
+                <input class="fact-input"
+                       [value]="fact"
+                       (input)="onFactChange(node.id, $index, $event)">
+                <button class="del-fact" (click)="onDeleteFact(node.id, $index)">✕</button>
+              </div>
+            }
+          </div>
+          <button class="add-fact-btn" (click)="onAddFact(node.id)">+ Frage / Check hinzufügen</button>
+        </div>
+      }
+    </div>
+
+    <button class="add-step-btn" (click)="onAddNode()">+ Knoten hinzufügen</button>
+    <div class="save-note">Änderungen werden automatisch gespeichert.</div>
+
+  } @else {
+    <div class="empty-note">Kein Algorithmus vorhanden. Lege oben einen neuen an.</div>
+  }
+</div>

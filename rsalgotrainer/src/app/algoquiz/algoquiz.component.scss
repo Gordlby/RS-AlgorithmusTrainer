@@ -1,0 +1,123 @@
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px 18px 60px;
+}
+
+.mode-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+
+  .opt { flex: 1; min-width: 150px; text-align: center; }
+  .opt.active { border-color: var(--lime); color: var(--lime); }
+}
+
+.quiz-box {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.quiz-progress {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.quiz-q {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  margin: 0 0 16px;
+  line-height: 1.4;
+}
+
+.quiz-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.next-btn {
+  background: var(--lime);
+  color: #08110d;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer;
+}
+
+.restart {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 16px;
+}
+
+.order-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li {
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .num { color: var(--muted); width: 18px; }
+}
+
+.check-order-btn {
+  margin-top: 14px;
+  background: var(--lime);
+  color: #08110d;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer;
+}
+
+.order-result {
+  margin-top: 12px;
+  font-size: 14px;
+  font-family: 'JetBrains Mono', monospace;
+
+  &.ok  { color: var(--ok); }
+  &.err { color: var(--critical); }
+}

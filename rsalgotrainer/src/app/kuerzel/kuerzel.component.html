@@ -1,0 +1,96 @@
+<div class="wrap">
+
+  <!-- Kürzel-Selektor + Mode-Tabs -->
+  <div class="top-bar">
+    <div class="selector">
+      @for (m of data.mnemonics(); track m.id) {
+        <button class="chip"
+                [class.active]="current()?.id === m.id"
+                (click)="selectMnemonic(m.id)">
+          {{ m.acronym }}
+        </button>
+      }
+      @if (auth.isAdmin()) {
+        <button class="chip add" (click)="addMnemonic()">+ Neu</button>
+      }
+    </div>
+
+    <div class="mode-tabs">
+      <button [class.active]="mode() === 'ueben'"      (click)="setMode('ueben')">Üben</button>
+      <button [class.active]="mode() === 'bearbeiten'" (click)="setMode('bearbeiten')">Bearbeiten</button>
+    </div>
+  </div>
+
+  @if (current(); as m) {
+
+    <!-- ── ÜBEN ─────────────────────────────────────────────────────────── -->
+    @if (mode() === 'ueben') {
+      <div class="quiz-header">
+        <div class="acronym">{{ m.acronym }}</div>
+        <div class="mnemonic-title">{{ m.title }}</div>
+        <div class="progress">{{ revealedCount() }} / {{ m.items.length }} aufgedeckt</div>
+      </div>
+
+      <div class="items-list">
+        @for (item of m.items; track item.id) {
+          <div class="item-row" [class.revealed]="revealed().has(item.id)" (click)="reveal(item.id)">
+            <span class="letter-badge">{{ item.letter }}</span>
+            @if (revealed().has(item.id)) {
+              <span class="item-label revealed-text">{{ item.label }}</span>
+            } @else {
+              <span class="item-label hidden-text">Tippen zum Aufdecken</span>
+            }
+            @if (revealed().has(item.id)) {
+              <span class="check">✓</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="quiz-actions">
+        @if (!allRevealed()) {
+          <button class="btn primary" (click)="revealAll()">Alle aufdecken</button>
+        }
+        <button class="btn" (click)="reset()">Zurücksetzen</button>
+      </div>
+    }
+
+    <!-- ── BEARBEITEN ─────────────────────────────────────────────────── -->
+    @if (mode() === 'bearbeiten') {
+      <div class="edit-section">
+        <div class="edit-row">
+          <label>Kürzel
+            <input class="inp acronym-inp" [value]="m.acronym" (input)="onAcronymChange($event)" maxlength="10">
+          </label>
+          <label class="grow">Bezeichnung
+            <input class="inp" [value]="m.title" (input)="onTitleChange($event)">
+          </label>
+          @if (auth.isAdmin()) {
+            <button class="btn danger" (click)="removeMnemonic()">Löschen</button>
+          }
+        </div>
+
+        <div class="items-edit">
+          @for (item of m.items; track item.id) {
+            <div class="edit-item">
+              <input class="inp letter-inp" [value]="item.letter" placeholder="A" maxlength="2"
+                     (input)="onLetterChange(item.id, $event)">
+              <input class="inp grow" [value]="item.label" placeholder="Bedeutung"
+                     (input)="onLabelChange(item.id, $event)">
+              <button class="del-btn" (click)="removeItem(item.id)">✕</button>
+            </div>
+          }
+          <button class="btn" (click)="addItem()">+ Buchstabe hinzufügen</button>
+        </div>
+
+        <div class="edit-footer">
+          @if (data.saveStatus() === 'saving')  { <span class="st saving">Speichern…</span> }
+          @if (data.saveStatus() === 'saved')   { <span class="st saved">Gespeichert ✓</span> }
+          @if (data.saveStatus() === 'pending') { <span class="st pending">Antrag eingereicht ⏳</span> }
+          @if (data.saveStatus() === 'error')   { <span class="st error">Fehler</span> }
+          <button class="btn primary" (click)="saveAll()">Speichern</button>
+        </div>
+      </div>
+    }
+  }
+</div>

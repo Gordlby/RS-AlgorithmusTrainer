@@ -1,0 +1,250 @@
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px 18px 60px;
+}
+
+.fc-title-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+
+.pending-field {
+  font-weight: 700 !important;
+  border-color: #ffb84f !important;
+  color: #ffcc6a !important;
+}
+
+.step-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: grab;
+
+  &.dragging { opacity: .4; }
+}
+
+.step-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.type-select {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 6px;
+  font-size: 12.5px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.key-input {
+  width: 56px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 4px;
+}
+
+.title-input {
+  flex: 1;
+  min-width: 160px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  cursor: pointer;
+
+  &.sel { border-color: var(--text); }
+}
+
+.del-step {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+
+  &:hover { color: var(--critical); }
+}
+
+.link-select-wrap { margin-bottom: 10px; }
+
+.link-select {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+}
+
+.branches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.branch-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.branch-label-input {
+  width: 90px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 8px;
+  font-size: 13px;
+}
+
+.branch-static-label {
+  color: var(--muted);
+  font-size: 12.5px;
+  width: 70px;
+  flex: 0 0 auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.branch-target-select {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 8px;
+  font-size: 13px;
+}
+
+.del-branch {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover { color: var(--critical); }
+}
+
+.add-branch-btn {
+  background: none;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  margin-bottom: 10px;
+
+  &:hover { border-color: var(--lime); color: var(--lime); }
+}
+
+.facts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.fact-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.fact-input {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 13.5px;
+}
+
+.del-fact {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover { color: var(--critical); }
+}
+
+.add-fact-btn {
+  background: none;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  width: 100%;
+
+  &:hover { border-color: var(--lime); color: var(--lime); }
+}
+
+.add-step-btn {
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+
+  &:hover { border-color: var(--lime); color: var(--lime); }
+}
+
+.save-note {
+  color: var(--muted);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 10px;
+}

@@ -1,0 +1,87 @@
+<div class="wrap">
+  @if (!hasEnoughNodes) {
+    <div class="empty-note">Für ein Quiz braucht es mindestens 2 Knoten.</div>
+  } @else {
+
+    <!-- Mode selector -->
+    <div class="mode-row">
+      <button class="opt" [class.active]="mode() === 'connections'" (click)="setMode('connections')">Verbindungen</button>
+      <button class="opt" [class.active]="mode() === 'factorder'"   (click)="setMode('factorder')">Fragen-Reihenfolge</button>
+      <button class="opt" [class.active]="mode() === 'match'"       (click)="setMode('match')">Zuordnung: Frage → Knoten</button>
+    </div>
+
+    <!-- ── Connections / Match quiz ── -->
+    @if (mode() === 'connections' || mode() === 'match') {
+      @if (questions().length === 0) {
+        <div class="empty-note">
+          @if (mode() === 'connections') { Noch zu wenige Verbindungen definiert. }
+          @else { Mindestens 3 Knoten mit Inhalten benötigt. }
+        </div>
+      } @else if (finished()) {
+        <div class="quiz-box">
+          <p class="quiz-q">Fertig! {{ score() }} von {{ questions().length }} richtig.</p>
+          <button class="restart" (click)="buildQuiz()">Nochmal</button>
+        </div>
+      } @else if (currentQuestion) {
+        <div class="quiz-box">
+          <div class="quiz-progress">FRAGE {{ idx() + 1 }} / {{ questions().length }}</div>
+          <p class="quiz-q">{{ currentQuestion.prompt }}</p>
+          <div class="quiz-opts">
+            @for (opt of currentQuestion.options; track opt.id) {
+              <button class="opt" [class]="optionClass(opt.id)"
+                      [disabled]="answered()"
+                      (click)="answer(opt.id)">
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+          <div class="quiz-footer">
+            <span class="score">Punkte: {{ score() }}</span>
+            @if (answered()) {
+              <button class="next-btn" (click)="next()">Weiter →</button>
+            }
+          </div>
+        </div>
+      }
+    }
+
+    <!-- ── Fact-Order quiz ── -->
+    @if (mode() === 'factorder') {
+      @if (!factOrderEligible) {
+        <div class="empty-note">Kein Knoten hat mindestens 2 Einträge. Füge im Editor mehr hinzu.</div>
+      } @else {
+        @if (orderNode(); as node) {
+        <div class="quiz-box">
+          <p class="quiz-q">
+            Bringe die Einträge von
+            <strong [style.color]="node.color">{{ node.key ? node.key + ' — ' : '' }}{{ node.text }}</strong>
+            in die richtige Reihenfolge.
+          </p>
+
+          <ul class="order-list">
+            @for (item of orderItems(); track item.text; let i = $index) {
+              <li draggable="true"
+                  (dragstart)="onOrderDragStart(i)"
+                  (dragover)="onOrderDragOver($event, i)"
+                  (dragend)="onOrderDragEnd()">
+                <span class="num">{{ i + 1 }}.</span>
+                <span>{{ item.text }}</span>
+              </li>
+            }
+          </ul>
+
+          <button class="check-order-btn" (click)="checkOrder()">Prüfen</button>
+
+          @if (orderResult()) {
+            <div class="order-result" [class.ok]="orderCorrect()" [class.err]="!orderCorrect()">
+              {{ orderResult() }}
+            </div>
+          }
+
+          <button class="restart" (click)="nextFactOrder()">Anderer Knoten →</button>
+        </div>
+        }
+      }
+    }
+  }
+</div>

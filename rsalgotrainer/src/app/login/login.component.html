@@ -1,0 +1,36 @@
+<div class="overlay" (click)="closed.emit()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <h2>Anmelden</h2>
+
+    <div class="mode-tabs">
+      <button [class.active]="mode === 'user'"  (click)="mode = 'user';  password = ''">Zugangscode</button>
+      <button [class.active]="mode === 'admin'" (click)="mode = 'admin'">Admin</button>
+    </div>
+
+    <form (ngSubmit)="submit()">
+      @if (mode === 'user') {
+        <label>Zugangscode
+          <input type="text" [(ngModel)]="credential" name="code" placeholder="z.B. rs-2024" required>
+        </label>
+      } @else {
+        <label>Benutzername
+          <input type="text" [(ngModel)]="credential" name="user" placeholder="admin" required>
+        </label>
+        <label>Passwort
+          <input type="password" [(ngModel)]="password" name="pass" placeholder="••••••••" required>
+        </label>
+      }
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="closed.emit()">Abbrechen</button>
+        <button type="submit" class="btn primary" [disabled]="loading()">
+          {{ loading() ? '…' : 'Anmelden' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

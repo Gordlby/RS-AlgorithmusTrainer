@@ -1,0 +1,88 @@
+.wrap { padding: 1.5rem 0; }
+
+h2 { margin: 0 0 1.2rem; font-size: 1.1rem; color: #ccff33; }
+
+.msg-banner {
+  background: #1a2a22; border: 1px solid #4fd1a5; border-radius: 6px;
+  padding: .6rem 1rem; margin-bottom: 1rem; font-size: .85rem; color: #4fd1a5;
+}
+
+.empty-note {
+  color: #5c7168; font-size: .9rem; text-align: center; padding: 2rem;
+}
+
+.muted { color: #5c7168; font-size: .9rem; }
+
+.requests-list { display: flex; flex-direction: column; gap: .75rem; }
+
+.request-card {
+  background: #111; border: 1px solid #2a3a32; border-radius: 8px;
+  padding: 1rem;
+
+  .req-meta {
+    display: flex; gap: .75rem; align-items: center; margin-bottom: .6rem;
+    font-size: .78rem;
+
+    .req-user { background: #1a2a22; padding: .2rem .6rem; border-radius: 4px; color: #4fa8ff; }
+    .req-key  { color: #8a9e96; }
+    .req-date { color: #5c7168; margin-left: auto; }
+  }
+
+  .req-preview {
+    font-size: .85rem; color: #c0d0c8; margin-bottom: .8rem;
+    strong { color: #e0ede8; }
+  }
+
+  .delete-badge {
+    background: rgba(255,77,61,.15); color: #ff4d3d;
+    border: 1px solid #ff4d3d; border-radius: 4px;
+    padding: .15rem .5rem; font-size: .75rem;
+  }
+
+  .req-title {
+    font-size: .9rem; font-weight: 600; color: #e0ede8; margin-bottom: .7rem;
+  }
+
+  .req-actions { display: flex; gap: .5rem; margin-top: .8rem; }
+
+  .diff-empty { font-size: .78rem; color: #5c7168; margin-bottom: .8rem; }
+
+  .diff-list {
+    display: flex; flex-direction: column; gap: .3rem;
+    background: #0a0f0d; border: 1px solid #1e2e28; border-radius: 6px;
+    padding: .6rem .8rem; margin-bottom: .8rem;
+    font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+  }
+
+  .diff-row {
+    display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
+    line-height: 1.5;
+
+    .diff-icon {
+      font-weight: 700; width: 1rem; flex-shrink: 0; text-align: center;
+    }
+    .diff-arrow { color: #5c7168; flex-shrink: 0; }
+
+    &.changed {
+      .diff-icon { color: #ffb84f; }
+      .diff-old { color: #ff7f6e; text-decoration: line-through; }
+      .diff-new { color: #4fd1a5; }
+    }
+    &.added {
+      .diff-icon { color: #4fd1a5; }
+      .diff-new { color: #4fd1a5; }
+    }
+    &.removed {
+      .diff-icon { color: #ff4d3d; }
+      .diff-old { color: #ff4d3d; }
+    }
+  }
+}
+
+.btn {
+  padding: .4rem .9rem; border-radius: 6px; font-size: .82rem; cursor: pointer;
+  border: 1px solid transparent;
+  &.success { background: rgba(79,209,165,.12); border-color: #4fd1a5; color: #4fd1a5; }
+  &.danger  { background: rgba(255,77,61,.12);  border-color: #ff4d3d; color: #ff4d3d; }
+  &:hover { opacity: .8; }
+}

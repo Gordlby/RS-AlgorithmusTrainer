@@ -1,0 +1,70 @@
+<div class="wrap">
+  <h2>Änderungsanträge</h2>
+
+  @if (message()) {
+    <div class="msg-banner">{{ message() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Lade Anträge…</p>
+  } @else if (requests().length === 0) {
+    <div class="empty-note">Keine ausstehenden Änderungsanträge.</div>
+  } @else {
+    <div class="requests-list">
+      @for (req of requests(); track req.id) {
+        <div class="request-card">
+          <div class="req-meta">
+            <span class="req-user">{{ req.username }}</span>
+            <span class="req-key">{{ keyLabel(req.key) }}</span>
+            <span class="req-date">{{ req.created_at | date:'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+
+          @if (req.value === '__DELETE__') {
+            <div class="req-title">
+              <span class="delete-badge">LÖSCHEN</span>
+            </div>
+          } @else {
+            <div class="req-title">{{ fcTitle(req) }}</div>
+
+            @if (!req.old_value) {
+              <div class="diff-empty">Kein Vergleichswert vorhanden (neuer Eintrag).</div>
+            } @else {
+              @let changes = diff(req);
+              @if (changes.length === 0) {
+                <div class="diff-empty">Keine inhaltlichen Unterschiede gefunden.</div>
+              } @else {
+                <div class="diff-list">
+                  @for (d of changes; track d.label) {
+                    @if (d.kind === 'changed') {
+                      <div class="diff-row changed">
+                        <span class="diff-icon">~</span>
+                        <span class="diff-old">{{ d.oldLabel }}</span>
+                        <span class="diff-arrow">→</span>
+                        <span class="diff-new">{{ d.label }}</span>
+                      </div>
+                    } @else if (d.kind === 'added') {
+                      <div class="diff-row added">
+                        <span class="diff-icon">+</span>
+                        <span class="diff-new">{{ d.label }}</span>
+                      </div>
+                    } @else {
+                      <div class="diff-row removed">
+                        <span class="diff-icon">−</span>
+                        <span class="diff-old">{{ d.label }}</span>
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            }
+          }
+
+          <div class="req-actions">
+            <button class="btn success" (click)="approve(req.id)">✓ Genehmigen</button>
+            <button class="btn danger"  (click)="reject(req.id)">✕ Ablehnen</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

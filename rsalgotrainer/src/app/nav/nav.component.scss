@@ -1,0 +1,128 @@
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px 18px 0;
+}
+
+.topbar {
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+
+.auth-area {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  &.saving  { color: #8a9e96; }
+  &.saved   { color: #4fd1a5; }
+  &.pending { color: #ffb84f; }
+  &.error   { color: #ff4d3d; }
+}
+
+.username {
+  font-size: 11px;
+  color: #4fa8ff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.btn-sm {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  &.primary { background: #ccff33; color: #0c1310; border-color: #ccff33; font-weight: 700; }
+  &:hover { opacity: .8; }
+}
+
+.btn-link {
+  font-size: 11px;
+  color: #ffb84f;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  &:hover { text-decoration: underline; }
+}
+
+.topbar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+
+h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  letter-spacing: -.01em;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}
+
+.fc-select-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  select {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    flex: 1;
+    min-width: 180px;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 0;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    text-decoration: none;
+    display: inline-block;
+
+    &.active {
+      color: var(--lime);
+      border-bottom-color: var(--lime);
+    }
+  }
+}

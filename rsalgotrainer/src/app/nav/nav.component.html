@@ -1,0 +1,65 @@
+<div class="wrap">
+  <div class="topbar">
+    <span class="topbar-label">ALGORITHMEN · TRAINER</span>
+
+    <!-- Auth-Bereich -->
+    <div class="auth-area">
+      @if (data.saveStatus() === 'saving') {
+        <span class="status saving">Speichern…</span>
+      } @else if (data.saveStatus() === 'saved') {
+        <span class="status saved">Gespeichert ✓</span>
+      } @else if (data.saveStatus() === 'pending') {
+        <span class="status pending">Antrag eingereicht ⏳</span>
+      } @else if (data.saveStatus() === 'error') {
+        <span class="status error">Fehler beim Speichern</span>
+      } @else if (data.saveStatus() === 'auth') {
+        <span class="status error">Bitte anmelden</span>
+      }
+
+      @if (auth.isLoggedIn()) {
+        <span class="username">{{ auth.user()?.username }}</span>
+        @if (auth.isAdmin()) {
+          <a class="btn-link" routerLink="/anfragen">Anträge</a>
+        }
+        <button class="btn-sm" (click)="logout()">Abmelden</button>
+      } @else {
+        <button class="btn-sm primary" (click)="showLogin.set(true)">Anmelden</button>
+      }
+    </div>
+  </div>
+
+  <h1>{{ data.currentFc()?.title || 'Algorithmen-Trainer' }}</h1>
+  <p class="subtitle">
+    Baue echte Flowcharts mit Entscheidungsästen (Ja/Nein) und Verweisen auf andere Algorithmen —
+    Quiz und Karteikarten leiten sich automatisch daraus ab.
+  </p>
+
+  <!-- Algorithm selector -->
+  <div class="fc-select-row">
+    <select (change)="onSelect($event)">
+      @for (fc of data.orderedFlowcharts(); track fc.id) {
+        <option [value]="fc.id" [selected]="fc.id === data.currentId()">{{ fc.title || '(ohne Titel)' }}</option>
+      }
+    </select>
+    @if (auth.isAdmin()) {
+      <button class="btn primary" (click)="onNew()">+ Neuer Algorithmus</button>
+      <button class="btn danger"  (click)="onDelete()">Löschen</button>
+    }
+  </div>
+
+  <!-- Tab navigation -->
+  <nav class="tabs">
+    @for (tab of tabs; track tab.path) {
+      <a class="tab-btn"
+         [routerLink]="tab.path"
+         routerLinkActive="active">
+        {{ tab.label }}
+      </a>
+    }
+  </nav>
+</div>
+
+<!-- Login Modal -->
+@if (showLogin()) {
+  <app-login (closed)="showLogin.set(false)" />
+}

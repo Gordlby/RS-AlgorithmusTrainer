@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    env_file: ./backend/.env
+    volumes:
+      - ./backend/data.db:/app/data.db
+      - ./backend/data.db-shm:/app/data.db-shm
+      - ./backend/data.db-wal:/app/data.db-wal
+    restart: unless-stopped
+
+  frontend:
+    build: ./rsalgotrainer
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

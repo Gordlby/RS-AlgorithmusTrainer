@@ -186,7 +186,9 @@ export class AlgoquizComponent implements OnInit {
   searchQuery = signal('');
   get searchQueryStr(): string { return this.searchQuery(); }
   set searchQueryStr(v: string) { this.searchQuery.set(v); }
-  revealedIds = signal<Set<string>>(new Set());
+
+  // Set of "nodeId:factIndex" strings
+  revealedFacts = signal<Set<string>>(new Set());
 
   factNodes = computed(() => {
     const fc = this.data.currentFc();
@@ -204,19 +206,35 @@ export class AlgoquizComponent implements OnInit {
     });
   });
 
-  isRevealed(nodeId: string): boolean { return this.revealedIds().has(nodeId); }
+  factKey(nodeId: string, idx: number): string { return `${nodeId}:${idx}`; }
 
-  toggleReveal(nodeId: string): void {
-    const s = new Set(this.revealedIds());
-    s.has(nodeId) ? s.delete(nodeId) : s.add(nodeId);
-    this.revealedIds.set(s);
+  isFactRevealed(nodeId: string, idx: number): boolean {
+    return this.revealedFacts().has(this.factKey(nodeId, idx));
   }
 
-  revealAll(): void {
-    this.revealedIds.set(new Set(this.filteredFactNodes().map(n => n.id)));
+  revealFact(nodeId: string, idx: number): void {
+    const s = new Set(this.revealedFacts());
+    s.add(this.factKey(nodeId, idx));
+    this.revealedFacts.set(s);
   }
 
-  resetReveal(): void { this.revealedIds.set(new Set()); }
+  revealedCountFor(node: FlowchartNode): number {
+    return (node.facts ?? []).filter((f, i) => f.trim() && this.isFactRevealed(node.id, i)).length;
+  }
+
+  totalFactsFor(node: FlowchartNode): number {
+    return (node.facts ?? []).filter(f => f.trim()).length;
+  }
+
+  revealAllFacts(): void {
+    const s = new Set(this.revealedFacts());
+    this.filteredFactNodes().forEach(n =>
+      (n.facts ?? []).forEach((f, i) => { if (f.trim()) s.add(this.factKey(n.id, i)); })
+    );
+    this.revealedFacts.set(s);
+  }
+
+  resetReveal(): void { this.revealedFacts.set(new Set()); }
 
   nodeColor(n: FlowchartNode): string { return n.color || 'var(--lime)'; }
 

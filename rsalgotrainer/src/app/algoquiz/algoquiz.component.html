@@ -5,9 +5,10 @@
 
     <!-- Mode selector -->
     <div class="mode-row">
-      <button class="opt" [class.active]="mode() === 'connections'" (click)="setMode('connections')">Verbindungen</button>
-      <button class="opt" [class.active]="mode() === 'factorder'"   (click)="setMode('factorder')">Fragen-Reihenfolge</button>
-      <button class="opt" [class.active]="mode() === 'match'"       (click)="setMode('match')">Zuordnung: Frage → Knoten</button>
+      <button class="opt" [class.active]="mode() === 'connections'"   (click)="setMode('connections')">Verbindungen</button>
+      <button class="opt" [class.active]="mode() === 'factorder'"     (click)="setMode('factorder')">Fragen-Reihenfolge</button>
+      <button class="opt" [class.active]="mode() === 'match'"         (click)="setMode('match')">Zuordnung</button>
+      <button class="opt" [class.active]="mode() === 'facts-reveal'"  (click)="setMode('facts-reveal')">Fragen aufdecken</button>
     </div>
 
     <!-- ── Connections / Match quiz ── -->
@@ -83,5 +84,45 @@
         }
       }
     }
+
+    <!-- ── Facts-Reveal ── -->
+    @if (mode() === 'facts-reveal') {
+      @if (factNodes().length === 0) {
+        <div class="empty-note">Noch keine Knoten mit Fragen/Checks vorhanden.</div>
+      } @else {
+        <div class="reveal-toolbar">
+          <input class="search-input" type="text" placeholder="Knoten suchen … (z.B. CPR, Atemweg, immobilisieren)"
+                 [(ngModel)]="searchQueryStr"/>
+          <div class="reveal-actions">
+            <button class="reveal-btn-all" (click)="revealAll()">Alle aufdecken</button>
+            <button class="restart" style="margin-top:0" (click)="resetReveal()">Zurücksetzen</button>
+          </div>
+        </div>
+
+        @if (filteredFactNodes().length === 0) {
+          <div class="empty-note">Keine passenden Knoten gefunden.</div>
+        }
+
+        <div class="reveal-list">
+          @for (node of filteredFactNodes(); track node.id) {
+            <div class="reveal-card">
+              <button class="reveal-header" (click)="toggleReveal(node.id)">
+                @if (node.key) { <span class="rkey">{{ node.key }}</span> }
+                <span class="rtext" [style.color]="nodeColor(node)">{{ node.text }}</span>
+                <span class="rtoggle">{{ isRevealed(node.id) ? '▲' : '▼' }}</span>
+              </button>
+              @if (isRevealed(node.id)) {
+                <ul class="reveal-facts">
+                  @for (f of node.facts; track $index) {
+                    @if (f.trim()) { <li>{{ f }}</li> }
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
   }
 </div>

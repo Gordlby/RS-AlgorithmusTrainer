@@ -1,8 +1,9 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { AlgoDataService } from '../services/algo-data.service';
 import { Flowchart, FlowchartNode } from '../models/flowchart';
 
-export type QuizMode = 'connections' | 'factorder' | 'match';
+export type QuizMode = 'connections' | 'factorder' | 'match' | 'facts-reveal';
 
 interface Option { id: string; label: string; }
 interface QuizQuestion {
@@ -14,7 +15,7 @@ interface OrderItem { text: string; originalIndex: number; }
 
 @Component({
   selector: 'app-algoquiz',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './algoquiz.component.html',
   styleUrl: './algoquiz.component.scss'
 })
@@ -180,6 +181,44 @@ export class AlgoquizComponent implements OnInit {
   }
 
   onOrderDragEnd(): void { this.dragOrderIdx = null; }
+
+  // ─── Facts-Reveal mode ────────────────────────────────────────────────────
+  searchQuery = signal('');
+  get searchQueryStr(): string { return this.searchQuery(); }
+  set searchQueryStr(v: string) { this.searchQuery.set(v); }
+  revealedIds = signal<Set<string>>(new Set());
+
+  factNodes = computed(() => {
+    const fc = this.data.currentFc();
+    if (!fc) return [];
+    return fc.nodes.filter(n => (n.facts ?? []).some(f => f.trim()));
+  });
+
+  filteredFactNodes = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    if (!q) return this.factNodes();
+    const terms = q.split(/\s+/);
+    return this.factNodes().filter(n => {
+      const hay = (n.text + ' ' + (n.key ?? '')).toLowerCase();
+      return terms.every(t => hay.includes(t));
+    });
+  });
+
+  isRevealed(nodeId: string): boolean { return this.revealedIds().has(nodeId); }
+
+  toggleReveal(nodeId: string): void {
+    const s = new Set(this.revealedIds());
+    s.has(nodeId) ? s.delete(nodeId) : s.add(nodeId);
+    this.revealedIds.set(s);
+  }
+
+  revealAll(): void {
+    this.revealedIds.set(new Set(this.filteredFactNodes().map(n => n.id)));
+  }
+
+  resetReveal(): void { this.revealedIds.set(new Set()); }
+
+  nodeColor(n: FlowchartNode): string { return n.color || 'var(--lime)'; }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
   get hasEnoughNodes(): boolean {

@@ -89,7 +89,8 @@
     @if (mode() === 'facts-reveal') {
       @if (factNodes().length === 0) {
         <div class="empty-note">Noch keine Knoten mit Fragen/Checks vorhanden.</div>
-      } @else if (currentFactNode(); as node) {
+      } @else {
+      @if (currentFactNode(); as node) {
         <div class="quiz-box">
 
           <!-- Header: Knotenname + Fortschritt -->
@@ -150,6 +151,7 @@
             <button class="restart" (click)="resetFactsReveal()">Von vorne</button>
           </div>
         </div>
+      }
       }
     }
 

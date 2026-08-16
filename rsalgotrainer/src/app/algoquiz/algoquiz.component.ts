@@ -48,7 +48,8 @@ export class AlgoquizComponent implements OnInit {
 
   setMode(m: QuizMode): void {
     this.mode.set(m);
-    this.buildQuiz();
+    if (m === 'facts-reveal') this.resetFactsReveal();
+    else this.buildQuiz();
   }
 
   buildQuiz(): void {
@@ -183,12 +184,13 @@ export class AlgoquizComponent implements OnInit {
   onOrderDragEnd(): void { this.dragOrderIdx = null; }
 
   // ─── Facts-Reveal mode ────────────────────────────────────────────────────
-  searchQuery = signal('');
-  get searchQueryStr(): string { return this.searchQuery(); }
-  set searchQueryStr(v: string) { this.searchQuery.set(v); }
+  factNodeIdx  = signal(0);
+  factInput    = signal('');
+  noMatch      = signal(false);
+  revealedFacts = signal<Set<string>>(new Set());  // "nodeId:factIndex"
 
-  // Set of "nodeId:factIndex" strings
-  revealedFacts = signal<Set<string>>(new Set());
+  get factInputStr(): string { return this.factInput(); }
+  set factInputStr(v: string) { this.factInput.set(v); }
 
   factNodes = computed(() => {
     const fc = this.data.currentFc();
@@ -196,26 +198,12 @@ export class AlgoquizComponent implements OnInit {
     return fc.nodes.filter(n => (n.facts ?? []).some(f => f.trim()));
   });
 
-  filteredFactNodes = computed(() => {
-    const q = this.searchQuery().trim().toLowerCase();
-    if (!q) return this.factNodes();
-    const terms = q.split(/\s+/);
-    return this.factNodes().filter(n => {
-      const hay = (n.text + ' ' + (n.key ?? '')).toLowerCase();
-      return terms.every(t => hay.includes(t));
-    });
-  });
+  currentFactNode = computed(() => this.factNodes()[this.factNodeIdx()] ?? null);
 
   factKey(nodeId: string, idx: number): string { return `${nodeId}:${idx}`; }
 
   isFactRevealed(nodeId: string, idx: number): boolean {
     return this.revealedFacts().has(this.factKey(nodeId, idx));
-  }
-
-  revealFact(nodeId: string, idx: number): void {
-    const s = new Set(this.revealedFacts());
-    s.add(this.factKey(nodeId, idx));
-    this.revealedFacts.set(s);
   }
 
   revealedCountFor(node: FlowchartNode): number {
@@ -226,17 +214,87 @@ export class AlgoquizComponent implements OnInit {
     return (node.facts ?? []).filter(f => f.trim()).length;
   }
 
-  revealAllFacts(): void {
+  allFactsRevealed = computed(() => {
+    const n = this.currentFactNode();
+    if (!n) return false;
+    return this.revealedCountFor(n) >= this.totalFactsFor(n);
+  });
+
+  onFactEnter(): void {
+    const node = this.currentFactNode();
+    if (!node || this.allFactsRevealed()) return;
+    const input = this.factInput().trim();
+    if (!input) return;
+
+    // Find first unrevealed fact with ≥70% bigram similarity
+    const facts = (node.facts ?? []);
+    let matchIdx = -1;
+    for (let i = 0; i < facts.length; i++) {
+      if (!facts[i].trim() || this.isFactRevealed(node.id, i)) continue;
+      if (this.factSimilarity(input, facts[i]) >= 0.7) { matchIdx = i; break; }
+    }
+
+    if (matchIdx >= 0) {
+      const s = new Set(this.revealedFacts());
+      s.add(this.factKey(node.id, matchIdx));
+      this.revealedFacts.set(s);
+      this.factInput.set('');
+      this.noMatch.set(false);
+    } else {
+      this.noMatch.set(true);
+      setTimeout(() => this.noMatch.set(false), 1500);
+    }
+  }
+
+  revealAllCurrentFacts(): void {
+    const node = this.currentFactNode();
+    if (!node) return;
     const s = new Set(this.revealedFacts());
-    this.filteredFactNodes().forEach(n =>
-      (n.facts ?? []).forEach((f, i) => { if (f.trim()) s.add(this.factKey(n.id, i)); })
-    );
+    (node.facts ?? []).forEach((f, i) => { if (f.trim()) s.add(this.factKey(node.id, i)); });
     this.revealedFacts.set(s);
   }
 
-  resetReveal(): void { this.revealedFacts.set(new Set()); }
+  nextFactNode(): void {
+    this.factNodeIdx.update(i => Math.min(i + 1, this.factNodes().length - 1));
+    this.factInput.set('');
+    this.noMatch.set(false);
+  }
+
+  resetFactsReveal(): void {
+    this.factNodeIdx.set(0);
+    this.factInput.set('');
+    this.revealedFacts.set(new Set());
+    this.noMatch.set(false);
+  }
 
   nodeColor(n: FlowchartNode): string { return n.color || 'var(--lime)'; }
+
+  private norm(s: string): string {
+    return s.toLowerCase()
+      .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+      .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  private factSimilarity(input: string, fact: string): number {
+    const a = this.norm(input);
+    const b = this.norm(fact);
+    if (!a || !b) return 0;
+    // Bigram Sørensen–Dice coefficient
+    const bigrams = (str: string) => {
+      const bg = new Map<string, number>();
+      for (let i = 0; i < str.length - 1; i++) {
+        const k = str.slice(i, i + 2);
+        bg.set(k, (bg.get(k) ?? 0) + 1);
+      }
+      return bg;
+    };
+    const aB = bigrams(a), bB = bigrams(b);
+    let inter = 0;
+    aB.forEach((cnt, k) => { inter += Math.min(cnt, bB.get(k) ?? 0); });
+    const total = (a.length - 1) + (b.length - 1);
+    if (total <= 0) return a === b ? 1 : 0;
+    return (2 * inter) / total;
+  }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
   get hasEnoughNodes(): boolean {

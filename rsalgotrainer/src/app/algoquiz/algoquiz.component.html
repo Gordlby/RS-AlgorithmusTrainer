@@ -89,45 +89,66 @@
     @if (mode() === 'facts-reveal') {
       @if (factNodes().length === 0) {
         <div class="empty-note">Noch keine Knoten mit Fragen/Checks vorhanden.</div>
-      } @else {
-        <div class="reveal-toolbar">
-          <input class="search-input" type="text" placeholder="Knoten suchen … (z.B. CPR, Atemweg, immobilisieren)"
-                 [(ngModel)]="searchQueryStr"/>
-          <div class="reveal-actions">
-            <button class="reveal-btn-all" (click)="revealAllFacts()">Alle aufdecken</button>
-            <button class="restart" style="margin-top:0" (click)="resetReveal()">Zurücksetzen</button>
+      } @else if (currentFactNode(); as node) {
+        <div class="quiz-box">
+
+          <!-- Header: Knotenname + Fortschritt -->
+          <div class="fact-node-header">
+            <div class="quiz-progress">KNOTEN {{ factNodeIdx() + 1 }} / {{ factNodes().length }}</div>
+            <div class="fact-node-title" [style.color]="nodeColor(node)">
+              @if (node.key) { <span class="rkey">{{ node.key }}</span> }
+              {{ node.text }}
+            </div>
+            <div class="rprogress">{{ revealedCountFor(node) }} / {{ totalFactsFor(node) }} aufgedeckt</div>
           </div>
-        </div>
 
-        @if (filteredFactNodes().length === 0) {
-          <div class="empty-note">Keine passenden Knoten gefunden.</div>
-        }
-
-        <div class="reveal-list">
-          @for (node of filteredFactNodes(); track node.id) {
-            <div class="reveal-card">
-              <div class="reveal-header">
-                @if (node.key) { <span class="rkey">{{ node.key }}</span> }
-                <span class="rtext" [style.color]="nodeColor(node)">{{ node.text }}</span>
-                <span class="rprogress">{{ revealedCountFor(node) }} / {{ totalFactsFor(node) }}</span>
-              </div>
-              <div class="reveal-facts">
-                @for (f of node.facts; track $index; let i = $index) {
-                  @if (f.trim()) {
-                    <div class="fact-row" [class.revealed]="isFactRevealed(node.id, i)"
-                         (click)="revealFact(node.id, i)">
-                      @if (isFactRevealed(node.id, i)) {
-                        <span class="fact-check">✓</span>
-                        <span class="fact-text">{{ f }}</span>
-                      } @else {
-                        <span class="fact-hidden">Tippen zum Aufdecken</span>
-                      }
-                    </div>
+          <!-- Fragen/Checks Liste -->
+          <div class="reveal-facts">
+            @for (f of node.facts; track $index; let i = $index) {
+              @if (f.trim()) {
+                <div class="fact-row" [class.revealed]="isFactRevealed(node.id, i)">
+                  @if (isFactRevealed(node.id, i)) {
+                    <span class="fact-check">✓</span>
+                    <span class="fact-text">{{ f }}</span>
+                  } @else {
+                    <span class="fact-hidden">···</span>
                   }
-                }
-              </div>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Eingabefeld -->
+          @if (!allFactsRevealed()) {
+            <div class="fact-input-row">
+              <input #factIn class="fact-input" type="text"
+                     placeholder="Antwort eingeben und Enter drücken …"
+                     [(ngModel)]="factInputStr"
+                     (keydown.enter)="onFactEnter()"
+                     [class.no-match]="noMatch()"/>
+              @if (noMatch()) {
+                <span class="no-match-hint">Nicht erkannt – weiter versuchen</span>
+              }
             </div>
           }
+
+          <!-- Alle aufgedeckt → weiter oder fertig -->
+          @if (allFactsRevealed()) {
+            <div class="fact-done">
+              <span class="fact-done-label">✓ Alle aufgedeckt!</span>
+              @if (factNodeIdx() + 1 < factNodes().length) {
+                <button class="next-btn" (click)="nextFactNode()">Weiter →</button>
+              } @else {
+                <span class="fact-done-label">🎉 Fertig!</span>
+              }
+            </div>
+          }
+
+          <!-- Hilfsaktionen -->
+          <div class="fact-footer">
+            <button class="restart" (click)="revealAllCurrentFacts()">Alle aufdecken</button>
+            <button class="restart" (click)="resetFactsReveal()">Von vorne</button>
+          </div>
         </div>
       }
     }

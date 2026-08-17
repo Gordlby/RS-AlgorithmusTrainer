@@ -1,70 +1,132 @@
 <div class="wrap">
-  <h2>Änderungsanträge</h2>
 
-  @if (message()) {
-    <div class="msg-banner">{{ message() }}</div>
-  }
+  <!-- Tab-Navigation -->
+  <div class="admin-tabs">
+    <button [class.active]="tab() === 'requests'" (click)="setTab('requests')">Änderungsanträge</button>
+    <button [class.active]="tab() === 'users'"    (click)="setTab('users')">Nutzer verwalten</button>
+  </div>
 
-  @if (loading()) {
-    <p class="muted">Lade Anträge…</p>
-  } @else if (requests().length === 0) {
-    <div class="empty-note">Keine ausstehenden Änderungsanträge.</div>
-  } @else {
-    <div class="requests-list">
-      @for (req of requests(); track req.id) {
-        <div class="request-card">
-          <div class="req-meta">
-            <span class="req-user">{{ req.username }}</span>
-            <span class="req-key">{{ keyLabel(req.key) }}</span>
-            <span class="req-date">{{ req.created_at | date:'dd.MM.yyyy HH:mm' }}</span>
-          </div>
+  <!-- ── ÄNDERUNGSANTRÄGE ───────────────────────────────────────────────── -->
+  @if (tab() === 'requests') {
+    @if (message()) {
+      <div class="msg-banner">{{ message() }}</div>
+    }
 
-          @if (req.value === '__DELETE__') {
-            <div class="req-title">
-              <span class="delete-badge">LÖSCHEN</span>
+    @if (loading()) {
+      <p class="muted">Lade Anträge…</p>
+    } @else if (requests().length === 0) {
+      <div class="empty-note">Keine ausstehenden Änderungsanträge.</div>
+    } @else {
+      <div class="requests-list">
+        @for (req of requests(); track req.id) {
+          <div class="request-card">
+            <div class="req-meta">
+              <span class="req-user">{{ req.username }}</span>
+              <span class="req-key">{{ keyLabel(req.key) }}</span>
+              <span class="req-date">{{ req.created_at | date:'dd.MM.yyyy HH:mm' }}</span>
             </div>
-          } @else {
-            <div class="req-title">{{ fcTitle(req) }}</div>
 
-            @if (!req.old_value) {
-              <div class="diff-empty">Kein Vergleichswert vorhanden (neuer Eintrag).</div>
+            @if (req.value === '__DELETE__') {
+              <div class="req-title">
+                <span class="delete-badge">LÖSCHEN</span>
+              </div>
             } @else {
-              @let changes = diff(req);
-              @if (changes.length === 0) {
-                <div class="diff-empty">Keine inhaltlichen Unterschiede gefunden.</div>
+              <div class="req-title">{{ fcTitle(req) }}</div>
+
+              @if (!req.old_value) {
+                <div class="diff-empty">Kein Vergleichswert vorhanden (neuer Eintrag).</div>
               } @else {
-                <div class="diff-list">
-                  @for (d of changes; track d.label) {
-                    @if (d.kind === 'changed') {
-                      <div class="diff-row changed">
-                        <span class="diff-icon">~</span>
-                        <span class="diff-old">{{ d.oldLabel }}</span>
-                        <span class="diff-arrow">→</span>
-                        <span class="diff-new">{{ d.label }}</span>
-                      </div>
-                    } @else if (d.kind === 'added') {
-                      <div class="diff-row added">
-                        <span class="diff-icon">+</span>
-                        <span class="diff-new">{{ d.label }}</span>
-                      </div>
-                    } @else {
-                      <div class="diff-row removed">
-                        <span class="diff-icon">−</span>
-                        <span class="diff-old">{{ d.label }}</span>
-                      </div>
+                @let changes = diff(req);
+                @if (changes.length === 0) {
+                  <div class="diff-empty">Keine inhaltlichen Unterschiede gefunden.</div>
+                } @else {
+                  <div class="diff-list">
+                    @for (d of changes; track d.label) {
+                      @if (d.kind === 'changed') {
+                        <div class="diff-row changed">
+                          <span class="diff-icon">~</span>
+                          <span class="diff-old">{{ d.oldLabel }}</span>
+                          <span class="diff-arrow">→</span>
+                          <span class="diff-new">{{ d.label }}</span>
+                        </div>
+                      } @else if (d.kind === 'added') {
+                        <div class="diff-row added">
+                          <span class="diff-icon">+</span>
+                          <span class="diff-new">{{ d.label }}</span>
+                        </div>
+                      } @else {
+                        <div class="diff-row removed">
+                          <span class="diff-icon">−</span>
+                          <span class="diff-old">{{ d.label }}</span>
+                        </div>
+                      }
                     }
-                  }
-                </div>
+                  </div>
+                }
               }
             }
-          }
 
-          <div class="req-actions">
-            <button class="btn success" (click)="approve(req.id)">✓ Genehmigen</button>
-            <button class="btn danger"  (click)="reject(req.id)">✕ Ablehnen</button>
+            <div class="req-actions">
+              <button class="btn success" (click)="approve(req.id)">✓ Genehmigen</button>
+              <button class="btn danger"  (click)="reject(req.id)">✕ Ablehnen</button>
+            </div>
           </div>
-        </div>
-      }
-    </div>
+        }
+      </div>
+    }
   }
+
+  <!-- ── NUTZER VERWALTEN ───────────────────────────────────────────────── -->
+  @if (tab() === 'users') {
+    @if (userMsg()) {
+      <div class="msg-banner">{{ userMsg() }}</div>
+    }
+
+    <!-- Neuen Nutzer anlegen -->
+    <div class="user-create-card">
+      <h3>Neuen Nutzer anlegen</h3>
+      <div class="user-create-row">
+        <input class="inp" type="text" placeholder="Benutzername"
+               [(ngModel)]="newUsernameStr"/>
+        <input class="inp" type="text" placeholder="Zugangscode"
+               [(ngModel)]="newCodeStr"/>
+        <button class="btn success" (click)="createUser()">+ Anlegen</button>
+      </div>
+    </div>
+
+    <!-- Nutzerliste -->
+    @if (usersLoading()) {
+      <p class="muted">Lade Nutzer…</p>
+    } @else if (users().length === 0) {
+      <div class="empty-note">Noch keine Nutzer vorhanden.</div>
+    } @else {
+      <div class="users-list">
+        @for (u of users(); track u.id) {
+          <div class="user-row">
+            <div class="user-info">
+              <span class="user-name">{{ u.username }}</span>
+              <span class="user-date">seit {{ u.created_at | date:'dd.MM.yyyy' }}</span>
+            </div>
+
+            @if (editingCodeId() === u.id) {
+              <div class="code-edit-row">
+                <input class="inp inp-sm" type="text" placeholder="Neuer Zugangscode"
+                       [(ngModel)]="editingCodeStr"
+                       (keydown.enter)="saveCode(u.id)"
+                       (keydown.escape)="cancelEditCode()"/>
+                <button class="btn success btn-sm" (click)="saveCode(u.id)">✓</button>
+                <button class="btn btn-sm"         (click)="cancelEditCode()">✕</button>
+              </div>
+            } @else {
+              <div class="user-actions">
+                <button class="btn btn-sm" (click)="startEditCode(u)">Code ändern</button>
+                <button class="btn danger btn-sm" (click)="deleteUser(u.id)">Löschen</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
 </div>

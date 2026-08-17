@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { API_URL } from '../services/api-url.token';
 
@@ -22,9 +23,11 @@ interface NodeDiff {
   oldLabel?: string;
 }
 
+interface User { id: number; username: string; created_at: string; }
+
 @Component({
   selector: 'app-admin-requests',
-  imports: [DatePipe],
+  imports: [DatePipe, FormsModule],
   templateUrl: './admin-requests.component.html',
   styleUrl: './admin-requests.component.scss'
 })
@@ -33,16 +36,32 @@ export class AdminRequestsComponent implements OnInit {
   private auth    = inject(AuthService);
   private baseUrl = inject(API_URL);
 
+  tab = signal<'requests' | 'users'>('requests');
+
   requests = signal<ChangeRequest[]>([]);
   loading  = signal(true);
   message  = signal('');
+
+  // ─── User management ─────────────────────────────────────────────────────
+  users        = signal<User[]>([]);
+  usersLoading = signal(false);
+  newUsername  = signal('');
+  newCode      = signal('');
+  userMsg      = signal('');
+  editingCodeId = signal<number | null>(null);
+  editingCode   = signal('');
 
   private get headers(): HttpHeaders {
     const token = this.auth.getToken();
     return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 
-  async ngOnInit(): Promise<void> { await this.load(); }
+  async ngOnInit(): Promise<void> { await this.load(); await this.loadUsers(); }
+
+  async setTab(t: 'requests' | 'users'): Promise<void> {
+    this.tab.set(t);
+    if (t === 'users') await this.loadUsers();
+  }
 
   async load(): Promise<void> {
     this.loading.set(true);
@@ -120,4 +139,70 @@ export class AdminRequestsComponent implements OnInit {
     await this.load();
     setTimeout(() => this.message.set(''), 3000);
   }
+
+  // ─── User management ─────────────────────────────────────────────────────
+  async loadUsers(): Promise<void> {
+    this.usersLoading.set(true);
+    try {
+      const rows = await firstValueFrom(
+        this.http.get<User[]>(`${this.baseUrl}/admin/users`, { headers: this.headers })
+      );
+      this.users.set(rows);
+    } finally { this.usersLoading.set(false); }
+  }
+
+  async createUser(): Promise<void> {
+    const username = this.newUsername().trim();
+    const accessCode = this.newCode().trim();
+    if (!username || !accessCode) { this.userMsg.set('Username und Code sind erforderlich.'); return; }
+    try {
+      await firstValueFrom(
+        this.http.post(`${this.baseUrl}/admin/users`, { username, accessCode }, { headers: this.headers })
+      );
+      this.newUsername.set(''); this.newCode.set('');
+      this.userMsg.set('Nutzer erstellt ✓');
+      await this.loadUsers();
+    } catch (e: any) {
+      this.userMsg.set(e?.error?.error ?? 'Fehler beim Erstellen.');
+    }
+    setTimeout(() => this.userMsg.set(''), 4000);
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    if (!confirm('Nutzer wirklich löschen?')) return;
+    await firstValueFrom(
+      this.http.delete(`${this.baseUrl}/admin/users/${id}`, { headers: this.headers })
+    );
+    await this.loadUsers();
+  }
+
+  startEditCode(user: User): void {
+    this.editingCodeId.set(user.id);
+    this.editingCode.set('');
+  }
+
+  async saveCode(userId: number): Promise<void> {
+    const code = this.editingCode().trim();
+    if (!code) return;
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.baseUrl}/admin/users/${userId}/code`, { accessCode: code }, { headers: this.headers })
+      );
+      this.editingCodeId.set(null);
+      this.userMsg.set('Code geändert ✓');
+      await this.loadUsers();
+    } catch (e: any) {
+      this.userMsg.set(e?.error?.error ?? 'Fehler.');
+    }
+    setTimeout(() => this.userMsg.set(''), 4000);
+  }
+
+  cancelEditCode(): void { this.editingCodeId.set(null); }
+
+  get newUsernameStr(): string { return this.newUsername(); }
+  set newUsernameStr(v: string) { this.newUsername.set(v); }
+  get newCodeStr(): string { return this.newCode(); }
+  set newCodeStr(v: string) { this.newCode.set(v); }
+  get editingCodeStr(): string { return this.editingCode(); }
+  set editingCodeStr(v: string) { this.editingCode.set(v); }
 }

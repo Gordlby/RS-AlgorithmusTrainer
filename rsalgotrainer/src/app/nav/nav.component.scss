@@ -30,6 +30,16 @@
   &:hover { opacity: .85; }
 }
 
+.ios-hint {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #8a9e96;
+  border: 1px solid #2a3a32;
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
 .offline-badge {
   font-size: 11px;
   font-family: 'JetBrains Mono', monospace;

@@ -8,6 +8,9 @@
     @if (pwa.canInstall()) {
       <button class="btn-install" (click)="pwa.install()">⬇ App installieren</button>
     }
+    @if (pwa.isIos() && !pwa.isStandalone()) {
+      <span class="ios-hint">Teilen → Zum Home-Bildschirm</span>
+    }
 
     <!-- Auth-Bereich -->
     <div class="auth-area">

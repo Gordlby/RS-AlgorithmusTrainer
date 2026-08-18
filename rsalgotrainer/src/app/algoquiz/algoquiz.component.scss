@@ -123,6 +123,29 @@
 }
 
 // ── Facts-Reveal ─────────────────────────────────────────────────────────────
+.reveal-options {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.opt-toggle {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+
+  &.active {
+    border-color: var(--lime);
+    color: var(--lime);
+    background: rgba(204, 255, 51, 0.08);
+  }
+}
+
 .fact-node-header {
   margin-bottom: 16px;
 }

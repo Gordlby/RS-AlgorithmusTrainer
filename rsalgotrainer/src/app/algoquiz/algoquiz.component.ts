@@ -184,10 +184,12 @@ export class AlgoquizComponent implements OnInit {
   onOrderDragEnd(): void { this.dragOrderIdx = null; }
 
   // ─── Facts-Reveal mode ────────────────────────────────────────────────────
-  factNodeIdx  = signal(0);
-  factInput    = signal('');
-  noMatch      = signal(false);
-  revealedFacts = signal<Set<string>>(new Set());  // "nodeId:factIndex"
+  factNodeIdx       = signal(0);
+  factInput         = signal('');
+  noMatch           = signal(false);
+  revealedFacts     = signal<Set<string>>(new Set());  // "nodeId:factIndex"
+  randomFacts       = signal(false);
+  shuffledFactIndices = signal<number[]>([]);
 
   get factInputStr(): string { return this.factInput(); }
   set factInputStr(v: string) { this.factInput.set(v); }
@@ -199,6 +201,24 @@ export class AlgoquizComponent implements OnInit {
   });
 
   currentFactNode = computed(() => this.factNodes()[this.factNodeIdx()] ?? null);
+
+  private buildShuffledIndices(): void {
+    const node = this.currentFactNode();
+    if (!node) { this.shuffledFactIndices.set([]); return; }
+    const indices = (node.facts ?? []).map((f, i) => ({ f, i })).filter(x => x.f.trim()).map(x => x.i);
+    if (this.randomFacts()) {
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+    }
+    this.shuffledFactIndices.set(indices);
+  }
+
+  toggleRandomFacts(): void {
+    this.randomFacts.update(v => !v);
+    this.buildShuffledIndices();
+  }
 
   factKey(nodeId: string, idx: number): string { return `${nodeId}:${idx}`; }
 
@@ -258,6 +278,7 @@ export class AlgoquizComponent implements OnInit {
     this.factNodeIdx.update(i => Math.min(i + 1, this.factNodes().length - 1));
     this.factInput.set('');
     this.noMatch.set(false);
+    this.buildShuffledIndices();
   }
 
   resetFactsReveal(): void {
@@ -265,6 +286,7 @@ export class AlgoquizComponent implements OnInit {
     this.factInput.set('');
     this.revealedFacts.set(new Set());
     this.noMatch.set(false);
+    this.buildShuffledIndices();
   }
 
   nodeColor(n: FlowchartNode): string { return n.color || 'var(--lime)'; }

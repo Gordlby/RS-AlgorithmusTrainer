@@ -90,6 +90,11 @@
       @if (factNodes().length === 0) {
         <div class="empty-note">Noch keine Knoten mit Fragen/Checks vorhanden.</div>
       } @else {
+      <div class="reveal-options">
+        <button class="opt-toggle" [class.active]="randomFacts()" (click)="toggleRandomFacts()">
+          Zufällige Reihenfolge
+        </button>
+      </div>
       @if (currentFactNode(); as node) {
         <div class="quiz-box">
 
@@ -105,17 +110,15 @@
 
           <!-- Fragen/Checks Liste -->
           <div class="reveal-facts">
-            @for (f of node.facts; track $index; let i = $index) {
-              @if (f.trim()) {
-                <div class="fact-row" [class.revealed]="isFactRevealed(node.id, i)">
-                  @if (isFactRevealed(node.id, i)) {
-                    <span class="fact-check">✓</span>
-                    <span class="fact-text">{{ f }}</span>
-                  } @else {
-                    <span class="fact-hidden">···</span>
-                  }
-                </div>
-              }
+            @for (fi of shuffledFactIndices(); track fi) {
+              <div class="fact-row" [class.revealed]="isFactRevealed(node.id, fi)">
+                @if (isFactRevealed(node.id, fi)) {
+                  <span class="fact-check">✓</span>
+                  <span class="fact-text">{{ node.facts[fi] }}</span>
+                } @else {
+                  <span class="fact-hidden">···</span>
+                }
+              </div>
             }
           </div>
 

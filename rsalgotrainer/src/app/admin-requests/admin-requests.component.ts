@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
+import { NetworkService } from '../services/network.service';
 import { API_URL } from '../services/api-url.token';
 
 interface ChangeRequest {
@@ -34,6 +35,7 @@ interface User { id: number; username: string; created_at: string; }
 export class AdminRequestsComponent implements OnInit {
   private http    = inject(HttpClient);
   private auth    = inject(AuthService);
+  readonly network = inject(NetworkService);
   private baseUrl = inject(API_URL);
 
   tab = signal<'requests' | 'users'>('requests');

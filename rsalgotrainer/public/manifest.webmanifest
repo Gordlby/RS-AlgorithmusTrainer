@@ -1,0 +1,17 @@
+{
+  "name": "RS AlgorithmusTrainer",
+  "short_name": "AlgoTrainer",
+  "description": "Algorithmen lernen mit Flowcharts, Quiz und Karteikarten",
+  "theme_color": "#08110d",
+  "background_color": "#08110d",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

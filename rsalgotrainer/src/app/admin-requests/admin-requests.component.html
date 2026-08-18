@@ -1,5 +1,15 @@
 <div class="wrap">
 
+  @if (!network.isOnline()) {
+    <div class="offline-wall">
+      <span class="offline-icon">⚡</span>
+      <p class="offline-title">Kein Internet</p>
+      <p class="offline-sub">Der Admin-Bereich ist nur online verfügbar.</p>
+    </div>
+  }
+
+  @if (network.isOnline()) {
+
   <!-- Tab-Navigation -->
   <div class="admin-tabs">
     <button [class.active]="tab() === 'requests'" (click)="setTab('requests')">Änderungsanträge</button>
@@ -128,5 +138,7 @@
       </div>
     }
   }
+
+  } <!-- end @if isOnline -->
 
 </div>

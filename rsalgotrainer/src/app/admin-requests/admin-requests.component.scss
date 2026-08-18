@@ -1,5 +1,18 @@
 .wrap { padding: 1.5rem 0; }
 
+.offline-wall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+
+  .offline-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+  .offline-title { font-size: 1.1rem; font-weight: 700; color: #ff4d3d; margin: .25rem 0; }
+  .offline-sub   { font-size: .9rem; color: #5c7168; margin: 0; }
+}
+
 .admin-tabs {
   display: flex; gap: 6px; margin-bottom: 1.2rem;
 

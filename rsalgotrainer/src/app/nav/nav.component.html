@@ -2,6 +2,10 @@
   <div class="topbar">
     <span class="topbar-label">ALGORITHMEN · TRAINER</span>
 
+    @if (!network.isOnline()) {
+      <span class="offline-badge">⚡ Offline</span>
+    }
+
     <!-- Auth-Bereich -->
     <div class="auth-area">
       @if (data.saveStatus() === 'saving') {

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AlgoDataService } from '../services/algo-data.service';
 import { AuthService } from '../services/auth.service';
+import { NetworkService } from '../services/network.service';
 import { LoginComponent } from '../login/login.component';
 
 @Component({
@@ -11,8 +12,9 @@ import { LoginComponent } from '../login/login.component';
   styleUrl: './nav.component.scss'
 })
 export class NavComponent {
-  data = inject(AlgoDataService);
-  auth = inject(AuthService);
+  data    = inject(AlgoDataService);
+  auth    = inject(AuthService);
+  network = inject(NetworkService);
 
   showLogin = signal(false);
 

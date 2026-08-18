@@ -3,12 +3,20 @@
   "index": "/index.html",
   "assetGroups": [
     {
-      "name": "app-shell",
+      "name": "app-page",
       "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/index.html"]
+      }
+    },
+    {
+      "name": "app-assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
       "resources": {
         "files": [
           "/favicon.ico",
-          "/index.html",
           "/manifest.webmanifest",
           "/icons/*.png",
           "/*.css",

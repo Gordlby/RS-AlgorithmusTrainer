@@ -5,6 +5,9 @@
     @if (!network.isOnline()) {
       <span class="offline-badge">⚡ Offline</span>
     }
+    @if (pwa.canInstall()) {
+      <button class="btn-install" (click)="pwa.install()">⬇ App installieren</button>
+    }
 
     <!-- Auth-Bereich -->
     <div class="auth-area">

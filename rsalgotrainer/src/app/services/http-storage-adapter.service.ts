@@ -28,7 +28,7 @@ export class HttpStorageAdapterService extends StorageAdapterService {
       );
       return res.value;
     } catch (err) {
-      if (err instanceof HttpErrorResponse && err.status === 404) return null;
+      if (err instanceof HttpErrorResponse && (err.status === 404 || err.status === 0)) return null;
       throw err;
     }
   }

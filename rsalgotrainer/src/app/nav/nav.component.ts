@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AlgoDataService } from '../services/algo-data.service';
 import { AuthService } from '../services/auth.service';
 import { NetworkService } from '../services/network.service';
+import { PwaService } from '../services/pwa.service';
 import { LoginComponent } from '../login/login.component';
 
 @Component({
@@ -15,6 +16,7 @@ export class NavComponent {
   data    = inject(AlgoDataService);
   auth    = inject(AuthService);
   network = inject(NetworkService);
+  pwa     = inject(PwaService);
 
   showLogin = signal(false);
 

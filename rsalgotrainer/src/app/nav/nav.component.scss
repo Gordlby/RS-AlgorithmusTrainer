@@ -16,6 +16,20 @@
   gap: 12px;
 }
 
+.btn-install {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #08110d;
+  background: #ccff33;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 9px;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: .03em;
+  &:hover { opacity: .85; }
+}
+
 .offline-badge {
   font-size: 11px;
   font-family: 'JetBrains Mono', monospace;

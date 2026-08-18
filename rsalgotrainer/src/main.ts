@@ -8,10 +8,5 @@ window.addEventListener('beforeinstallprompt', (e) => {
   (window as any).__pwaPrompt = e;
 });
 
-// Register custom service worker (production only).
-if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
-  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
-}
-
 bootstrapApplication(AppComponent, appConfig)
   .catch((err) => console.error(err));

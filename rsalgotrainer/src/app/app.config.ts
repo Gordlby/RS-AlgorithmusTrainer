@@ -1,7 +1,6 @@
-import { APP_INITIALIZER, ApplicationConfig, isDevMode, provideZoneChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
 import { StorageAdapterService } from './services/storage-adapter.service';
 import { HttpStorageAdapterService } from './services/http-storage-adapter.service';
@@ -19,9 +18,5 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     { provide: StorageAdapterService, useClass: HttpStorageAdapterService },
     { provide: APP_INITIALIZER, useFactory: initApp, deps: [AlgoDataService, MnemonicDataService], multi: true },
-    provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      registrationStrategy: 'registerImmediately'
-    }),
   ]
 };

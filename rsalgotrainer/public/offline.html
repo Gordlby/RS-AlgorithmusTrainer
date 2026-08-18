@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlgoTrainer – Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #08110d;
+      color: #e0ede8;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      text-align: center;
+      padding: 2rem;
+      gap: 1rem;
+    }
+    .icon  { font-size: 3rem; }
+    h1     { color: #ccff33; font-size: 1.4rem; font-weight: 700; }
+    p      { color: #5c7168; font-size: 0.9rem; line-height: 1.5; max-width: 280px; }
+    button {
+      margin-top: 0.5rem;
+      padding: 0.55rem 1.4rem;
+      background: #ccff33;
+      color: #08110d;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">⚡</div>
+  <h1>Kein Internet</h1>
+  <p>Die App wurde noch nicht vollständig gecacht.<br>Öffne sie einmal mit Internet, dann funktioniert sie auch offline.</p>
+  <button onclick="location.reload()">Nochmal versuchen</button>
+</body>
+</html>

@@ -6,11 +6,17 @@
 
 .flow-scroll {
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
   padding: 24px;
   max-height: 560px;
+
+  @media (max-width: 600px) {
+    max-height: calc(100dvh - 260px);
+    padding: 16px;
+  }
 }
 
 .flow-canvas {

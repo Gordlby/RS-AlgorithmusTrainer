@@ -12,6 +12,10 @@
 
   .opt { flex: 1; min-width: 150px; text-align: center; }
   .opt.active { border-color: var(--lime); color: var(--lime); }
+
+  @media (max-width: 520px) {
+    .opt { min-width: calc(50% - 4px); font-size: 13px; padding: 10px 8px; }
+  }
 }
 
 .quiz-box {
@@ -19,6 +23,8 @@
   background: var(--surface);
   border-radius: 10px;
   padding: 20px;
+
+  @media (max-width: 520px) { padding: 14px 12px; }
 }
 
 .quiz-progress {
@@ -263,4 +269,7 @@
   margin-top: 8px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+
+  .restart { margin-top: 0; flex: 1; text-align: center; }
 }

@@ -138,6 +138,11 @@ h3 { margin: 0 0 .8rem; font-size: .95rem; color: #ccff33; }
   display: flex; align-items: center; gap: .75rem;
   background: #111; border: 1px solid #2a3a32; border-radius: 8px;
   padding: .75rem 1rem; flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    .user-info { width: 100%; }
+    .user-actions, .code-edit-row { width: 100%; justify-content: flex-start; }
+  }
 }
 
 .user-info {

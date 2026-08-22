@@ -13,8 +13,10 @@ export interface DragItem {
 
 export interface DropZone {
   id: string;
-  x: number;   // 0–100 % of image width
-  y: number;   // 0–100 % of image height
+  x: number;   // left edge, 0–100 % of image width
+  y: number;   // top edge, 0–100 % of image height
+  w: number;   // width, % of image width
+  h: number;   // height, % of image height
   correctItemId: string | null;
 }
 

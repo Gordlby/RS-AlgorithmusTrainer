@@ -78,18 +78,20 @@
             @if (q.type === 'dragdrop') {
               @if (q.text) { <div class="q-text">{{ q.text }}</div> }
 
-              <div class="dd-image-wrap" (click)="$event.target === $event.currentTarget && onZoneClick('__none__')">
+              <div class="dd-image-wrap">
                 <img [src]="q.image" class="dd-img" alt="Beschriftungsbild">
                 @for (zone of q.dropZones; track zone.id) {
                   <div class="drop-zone"
                        [style.left.%]="zone.x"
                        [style.top.%]="zone.y"
+                       [style.width.%]="zone.w"
+                       [style.height.%]="zone.h"
                        [class.filled]="!!placements()[zone.id]"
                        [class.highlight-target]="selectedDragId() !== null && !placements()[zone.id] && practiceState() === 'picking'"
                        [class.correct]="practiceState() === 'checked' && placements()[zone.id] === zone.correctItemId"
                        [class.wrong]="practiceState() === 'checked' && !!placements()[zone.id] && placements()[zone.id] !== zone.correctItemId"
                        [class.missed]="practiceState() === 'checked' && !placements()[zone.id]"
-                       (click)="$event.stopPropagation(); onZoneClick(zone.id)">
+                       (click)="onZoneClick(zone.id)">
                     @if (placements()[zone.id]) {
                       <span class="zone-text">{{ getDragItemLabel(q, placements()[zone.id]) }}</span>
                     }
@@ -216,18 +218,29 @@
 
               @if (q.image) {
                 <div class="section-label" style="margin-top: 14px">
-                  Auf Bild klicken → Beschriftungsfeld platzieren
+                  Auf Bild klicken → Zone platzieren &nbsp;·&nbsp; Zone ziehen → verschieben &nbsp;·&nbsp; ↘ ziehen → Größe ändern
                 </div>
-                <div class="dd-editor-wrap" (click)="onImageClick($event, q.id)">
+                <div class="dd-editor-wrap" #editorWrap
+                     [class.dragging]="dragging"
+                     (click)="onImageClick($event, q.id, editorWrap)">
                   <img [src]="q.image" class="dd-img" alt="">
                   @for (zone of q.dropZones; track zone.id; let zi = $index) {
-                    <div class="zone-edit-marker"
+                    <div class="zone-edit-box"
                          [style.left.%]="zone.x"
                          [style.top.%]="zone.y"
+                         [style.width.%]="zone.w"
+                         [style.height.%]="zone.h"
+                         (mousedown)="startZoneDrag($event, q.id, zone.id, 'move', editorWrap)"
+                         (touchstart)="startZoneDrag($event, q.id, zone.id, 'move', editorWrap)"
                          (click)="$event.stopPropagation()">
                       <span class="zone-num">{{ zi + 1 }}</span>
                       <button class="del-zone-btn"
-                              (click)="qdata.deleteDropZone(fcId()!, q.id, zone.id)">✕</button>
+                              (mousedown)="$event.stopPropagation()"
+                              (click)="$event.stopPropagation(); qdata.deleteDropZone(fcId()!, q.id, zone.id)">✕</button>
+                      <div class="resize-handle"
+                           (mousedown)="$event.stopPropagation(); startZoneDrag($event, q.id, zone.id, 'resize', editorWrap)"
+                           (touchstart)="$event.stopPropagation(); startZoneDrag($event, q.id, zone.id, 'resize', editorWrap)">
+                      </div>
                     </div>
                   }
                 </div>

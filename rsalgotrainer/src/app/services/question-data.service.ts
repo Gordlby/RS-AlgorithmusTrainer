@@ -26,6 +26,12 @@ export class QuestionDataService {
     if (fcId in this.sets()) return;
     const str = await this.storage.get(QSET_KEY(fcId));
     const questions: Question[] = str ? JSON.parse(str) : [];
+    for (const q of questions) {
+      for (const dz of q.dropZones) {
+        if (dz.w == null) dz.w = 15;
+        if (dz.h == null) dz.h = 8;
+      }
+    }
     this.sets.update(s => ({ ...s, [fcId]: questions }));
   }
 
@@ -179,7 +185,7 @@ export class QuestionDataService {
   // ── Drop zones ──────────────────────────────────────────────────────────────
 
   addDropZone(fcId: string, qId: string, x: number, y: number): void {
-    const zone: DropZone = { id: this.uid(), x, y, correctItemId: null };
+    const zone: DropZone = { id: this.uid(), x, y, w: 15, h: 8, correctItemId: null };
     this.sets.update(s => ({
       ...s,
       [fcId]: (s[fcId] ?? []).map(q =>

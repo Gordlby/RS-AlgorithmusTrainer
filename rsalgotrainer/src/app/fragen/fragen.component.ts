@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlgoDataService } from '../services/algo-data.service';
 import { AuthService } from '../services/auth.service';
@@ -6,6 +6,20 @@ import { QuestionDataService } from '../services/question-data.service';
 import { Question, QuestionType } from '../models/question';
 
 type PracticeState = 'picking' | 'checked' | 'done';
+
+interface DragState {
+  type: 'move' | 'resize';
+  qId: string;
+  zoneId: string;
+  startX: number;
+  startY: number;
+  containerW: number;
+  containerH: number;
+  origX: number;
+  origY: number;
+  origW: number;
+  origH: number;
+}
 
 @Component({
   selector: 'app-fragen',
@@ -33,6 +47,11 @@ export class FragenComponent {
   // ── Editor ──────────────────────────────────────────────────────────────────
   expandedId   = signal<string | null>(null);
   showTypePick = signal(false);
+
+  // ── Zone drag/resize ────────────────────────────────────────────────────────
+  private _drag: DragState | null = null;
+  private _dragMoved = false;
+  get dragging(): boolean { return !!this._drag; }
 
   // ── Computed ─────────────────────────────────────────────────────────────────
   readonly fcId = computed(() => this.data.currentId());
@@ -204,14 +223,67 @@ export class FragenComponent {
     reader.readAsDataURL(file);
   }
 
-  onImageClick(event: MouseEvent, qId: string): void {
+  onImageClick(event: MouseEvent, qId: string, wrap: HTMLElement): void {
+    if (this._dragMoved) { this._dragMoved = false; return; }
     const id = this.fcId();
     if (!id) return;
-    const el = event.currentTarget as HTMLElement;
-    const rect = el.getBoundingClientRect();
-    const x = Math.round(((event.clientX - rect.left) / rect.width) * 1000) / 10;
-    const y = Math.round(((event.clientY - rect.top) / rect.height) * 1000) / 10;
+    const rect = wrap.getBoundingClientRect();
+    const W = 15, H = 8;
+    const cx = Math.round(((event.clientX - rect.left) / rect.width)  * 1000) / 10;
+    const cy = Math.round(((event.clientY - rect.top)  / rect.height) * 1000) / 10;
+    const x = Math.max(0, Math.min(100 - W, cx - W / 2));
+    const y = Math.max(0, Math.min(100 - H, cy - H / 2));
     this.qdata.addDropZone(id, qId, x, y);
+  }
+
+  // ── Zone drag / resize (editor) ───────────────────────────────────────────────
+
+  startZoneDrag(e: MouseEvent | TouchEvent, qId: string, zoneId: string, type: 'move' | 'resize', wrap: HTMLElement): void {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = wrap.getBoundingClientRect();
+    const cx = e instanceof MouseEvent ? e.clientX : (e as TouchEvent).touches[0].clientX;
+    const cy = e instanceof MouseEvent ? e.clientY : (e as TouchEvent).touches[0].clientY;
+    const id = this.fcId();
+    if (!id) return;
+    const zone = this.qdata.questionsFor(id).find(q => q.id === qId)?.dropZones.find(z => z.id === zoneId);
+    if (!zone) return;
+    this._drag = {
+      type, qId, zoneId,
+      startX: cx, startY: cy,
+      containerW: rect.width, containerH: rect.height,
+      origX: zone.x, origY: zone.y,
+      origW: zone.w, origH: zone.h,
+    };
+    this._dragMoved = false;
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  @HostListener('document:touchmove', ['$event'])
+  onDocMove(e: MouseEvent | TouchEvent): void {
+    if (!this._drag) return;
+    const cx = e instanceof MouseEvent ? e.clientX : (e as TouchEvent).touches[0].clientX;
+    const cy = e instanceof MouseEvent ? e.clientY : (e as TouchEvent).touches[0].clientY;
+    const dx = ((cx - this._drag.startX) / this._drag.containerW) * 100;
+    const dy = ((cy - this._drag.startY) / this._drag.containerH) * 100;
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) this._dragMoved = true;
+    const id = this.fcId();
+    if (!id) return;
+    if (this._drag.type === 'move') {
+      const x = Math.max(0, Math.min(100 - this._drag.origW, this._drag.origX + dx));
+      const y = Math.max(0, Math.min(100 - this._drag.origH, this._drag.origY + dy));
+      this.qdata.patchDropZone(id, this._drag.qId, this._drag.zoneId, { x, y });
+    } else {
+      const w = Math.max(5, Math.min(95, this._drag.origW + dx));
+      const h = Math.max(4, Math.min(50, this._drag.origH + dy));
+      this.qdata.patchDropZone(id, this._drag.qId, this._drag.zoneId, { w, h });
+    }
+  }
+
+  @HostListener('document:mouseup')
+  @HostListener('document:touchend')
+  onDocUp(): void {
+    this._drag = null;
   }
 
   typeLabel(type: QuestionType): string {

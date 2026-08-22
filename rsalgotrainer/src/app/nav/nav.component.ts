@@ -26,6 +26,7 @@ export class NavComponent {
     { label: 'Quiz',         path: 'quiz'      },
     { label: 'Karteikarten', path: 'karten'    },
     { label: 'Kürzel',       path: 'kuerzel'   },
+    { label: 'Fragen',       path: 'fragen'    },
   ];
 
   onSelect(event: Event): void {

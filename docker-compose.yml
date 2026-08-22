@@ -5,9 +5,7 @@ services:
       - "3000:3000"
     env_file: ./backend/.env
     volumes:
-      - ./backend/data.db:/app/data.db
-      - ./backend/data.db-shm:/app/data.db-shm
-      - ./backend/data.db-wal:/app/data.db-wal
+      - ./backend/data:/app/data
     restart: unless-stopped
 
   frontend:

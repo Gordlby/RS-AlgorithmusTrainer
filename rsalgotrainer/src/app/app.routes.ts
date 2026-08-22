@@ -7,6 +7,7 @@ import { AlgoquizComponent } from './algoquiz/algoquiz.component';
 import { FlowchartComponent } from './flowchart/flowchart.component';
 import { AdminRequestsComponent } from './admin-requests/admin-requests.component';
 import { KuerzelComponent } from './kuerzel/kuerzel.component';
+import { FragenComponent } from './fragen/fragen.component';
 
 export const routes: Routes = [
   {
@@ -20,6 +21,7 @@ export const routes: Routes = [
       { path: 'flowchart', component: FlowchartComponent },
       { path: 'anfragen',  component: AdminRequestsComponent },
       { path: 'kuerzel',   component: KuerzelComponent },
+      { path: 'fragen',    component: FragenComponent },
     ]
   },
   { path: '**', component: ErrorpageComponent }

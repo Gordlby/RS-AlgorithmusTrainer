@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import bcrypt from 'bcryptjs';
 import path from 'path';
 
-const DB_PATH = path.join(__dirname, '..', 'data.db');
+const DB_PATH = path.join(__dirname, '..', 'data', 'data.db');
 
 export const db = new Database(DB_PATH);
 

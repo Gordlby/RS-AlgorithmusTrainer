@@ -1,0 +1,286 @@
+<div class="wrap">
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <button [class.active]="tab() === 'ueben'"      (click)="tab.set('ueben')">Üben</button>
+    <button [class.active]="tab() === 'bearbeiten'" (click)="tab.set('bearbeiten')">Bearbeiten</button>
+  </div>
+
+  <!-- ══════════════════ ÜBEN ══════════════════ -->
+  @if (tab() === 'ueben') {
+
+    @if (practiceQuestions().length === 0) {
+      <div class="empty-note">
+        Noch keine Fragen für diesen Algorithmus.
+        @if (auth.isAdmin()) {
+          <br>Im Tab "Bearbeiten" Fragen hinzufügen.
+        }
+      </div>
+    }
+
+    @if (practiceQuestions().length > 0) {
+
+      @if (practiceState() === 'done') {
+        <div class="done-card">
+          <div class="done-score">{{ score() }} / {{ practiceQuestions().length }}</div>
+          <div class="done-label">{{ score() === practiceQuestions().length ? 'Perfekt! 🎯' : 'Fertig!' }}</div>
+          <button class="btn primary" (click)="resetPractice()">Nochmal</button>
+        </div>
+      }
+
+      @if (practiceState() !== 'done') {
+        @let q = currentQ();
+        @if (q) {
+          <div class="practice-progress">
+            Frage {{ practiceIdx() + 1 }} / {{ practiceQuestions().length }}
+            &nbsp;·&nbsp; {{ typeLabel(q.type) }}
+          </div>
+
+          <div class="quiz-box">
+
+            <!-- ── Single Choice / Multiple Choice ── -->
+            @if (q.type === 'single' || q.type === 'multiple') {
+              <div class="q-text">{{ q.text }}</div>
+              @if (q.type === 'multiple') {
+                <div class="multi-hint">Mehrere Antworten möglich</div>
+              }
+
+              <div class="choices">
+                @for (c of q.choices; track c.id) {
+                  <button class="choice-btn"
+                          [class.selected]="selectedIds().has(c.id)"
+                          [class.correct]="practiceState() === 'checked' && c.correct"
+                          [class.wrong]="practiceState() === 'checked' && selectedIds().has(c.id) && !c.correct"
+                          [class.missed]="practiceState() === 'checked' && !selectedIds().has(c.id) && c.correct"
+                          [disabled]="practiceState() === 'checked'"
+                          (click)="toggleChoice(c.id)">
+                    <span class="choice-mark">{{ q.type === 'single' ? '◯' : '□' }}</span>
+                    <span>{{ c.text }}</span>
+                  </button>
+                }
+              </div>
+
+              <div class="quiz-actions">
+                @if (practiceState() === 'picking') {
+                  <button class="btn primary"
+                          [disabled]="selectedIds().size === 0"
+                          (click)="checkAnswer()">Überprüfen</button>
+                }
+                @if (practiceState() === 'checked') {
+                  <button class="btn primary" (click)="nextQuestion()">
+                    {{ practiceIdx() + 1 < practiceQuestions().length ? 'Nächste Frage →' : 'Auswertung' }}
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- ── Beschriftung (Drag-Drop) ── -->
+            @if (q.type === 'dragdrop') {
+              @if (q.text) { <div class="q-text">{{ q.text }}</div> }
+
+              <div class="dd-image-wrap" (click)="$event.target === $event.currentTarget && onZoneClick('__none__')">
+                <img [src]="q.image" class="dd-img" alt="Beschriftungsbild">
+                @for (zone of q.dropZones; track zone.id) {
+                  <div class="drop-zone"
+                       [style.left.%]="zone.x"
+                       [style.top.%]="zone.y"
+                       [class.filled]="!!placements()[zone.id]"
+                       [class.highlight-target]="selectedDragId() !== null && !placements()[zone.id] && practiceState() === 'picking'"
+                       [class.correct]="practiceState() === 'checked' && placements()[zone.id] === zone.correctItemId"
+                       [class.wrong]="practiceState() === 'checked' && !!placements()[zone.id] && placements()[zone.id] !== zone.correctItemId"
+                       [class.missed]="practiceState() === 'checked' && !placements()[zone.id]"
+                       (click)="$event.stopPropagation(); onZoneClick(zone.id)">
+                    @if (placements()[zone.id]) {
+                      <span class="zone-text">{{ getDragItemLabel(q, placements()[zone.id]) }}</span>
+                    }
+                    @if (practiceState() === 'checked' && !placements()[zone.id]) {
+                      <span class="zone-text missed-text">{{ getDragItemLabel(q, zone.correctItemId) }}</span>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (selectedDragId() !== null) {
+                <div class="dd-selected-hint">
+                  „{{ getDragItemLabel(q, selectedDragId()) }}" ausgewählt – jetzt Zone anklicken
+                </div>
+              }
+
+              <div class="drag-pool">
+                @for (item of q.dragItems; track item.id) {
+                  <button class="drag-chip"
+                          [class.placed]="isItemPlaced(item.id)"
+                          [class.active-chip]="selectedDragId() === item.id"
+                          [disabled]="practiceState() === 'checked'"
+                          (click)="onDragItemClick(item.id)">
+                    {{ item.label }}
+                  </button>
+                }
+              </div>
+
+              <div class="quiz-actions">
+                @if (practiceState() === 'picking') {
+                  <button class="btn" (click)="resetDragDrop()">Zurücksetzen</button>
+                  <button class="btn primary" (click)="checkAnswer()">Überprüfen</button>
+                }
+                @if (practiceState() === 'checked') {
+                  <button class="btn primary" (click)="nextQuestion()">
+                    {{ practiceIdx() + 1 < practiceQuestions().length ? 'Nächste Frage →' : 'Auswertung' }}
+                  </button>
+                }
+              </div>
+            }
+
+          </div>
+        }
+      }
+    }
+  }
+
+  <!-- ══════════════════ BEARBEITEN ══════════════════ -->
+  @if (tab() === 'bearbeiten') {
+
+    <div class="edit-header">
+      <span class="edit-title">Fragen</span>
+      <div class="type-pick-wrap">
+        @if (!showTypePick()) {
+          <button class="btn primary" (click)="showTypePick.set(true)">+ Neue Frage</button>
+        } @else {
+          <div class="type-pick">
+            <button class="type-btn" (click)="addQuestion('single')">Single Choice</button>
+            <button class="type-btn" (click)="addQuestion('multiple')">Multiple Choice</button>
+            <button class="type-btn" (click)="addQuestion('dragdrop')">Beschriftung</button>
+            <button class="type-btn cancel" (click)="showTypePick.set(false)">Abbrechen</button>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (questions().length === 0) {
+      <div class="empty-note">Noch keine Fragen vorhanden.</div>
+    }
+
+    @for (q of questions(); track q.id; let idx = $index) {
+      <div class="q-card">
+        <div class="q-card-head" (click)="toggleExpand(q.id)">
+          <span class="q-num">{{ idx + 1 }}</span>
+          <span class="q-type-tag">{{ typeLabel(q.type) }}</span>
+          <span class="q-preview">{{ q.text || '(kein Text)' }}</span>
+          <button class="del-q" title="Löschen"
+                  (click)="$event.stopPropagation(); deleteQuestion(q.id)">✕</button>
+          <span class="expand-icon">{{ expandedId() === q.id ? '▲' : '▼' }}</span>
+        </div>
+
+        @if (expandedId() === q.id) {
+          <div class="q-editor">
+
+            <!-- Fragetext -->
+            <label class="field-label">Fragetext
+              <input class="inp" type="text" [ngModel]="q.text" placeholder="Frage eingeben…"
+                     (ngModelChange)="qdata.patchQuestion(fcId()!, q.id, { text: $event })">
+            </label>
+
+            <!-- Single / Multiple Choice ─────────────────────────────────── -->
+            @if (q.type === 'single' || q.type === 'multiple') {
+              <div class="section-label">
+                Antwortoptionen
+                <span class="section-hint">
+                  {{ q.type === 'single' ? '(genau eine richtige)' : '(mehrere richtige möglich)' }}
+                </span>
+              </div>
+
+              @for (c of q.choices; track c.id) {
+                <div class="choice-edit-row">
+                  <button class="correct-toggle" [class.on]="c.correct" title="Als richtig markieren"
+                          (click)="qdata.setCorrectChoice(fcId()!, q.id, c.id, !c.correct)">
+                    {{ c.correct ? '✓' : '○' }}
+                  </button>
+                  <input class="inp grow" type="text" [ngModel]="c.text" placeholder="Antwort…"
+                         (ngModelChange)="qdata.patchChoiceText(fcId()!, q.id, c.id, $event)">
+                  <button class="del-item" (click)="qdata.deleteChoice(fcId()!, q.id, c.id)">✕</button>
+                </div>
+              }
+              <button class="add-item-btn" (click)="qdata.addChoice(fcId()!, q.id)">+ Antwort</button>
+            }
+
+            <!-- Beschriftung (Drag-Drop) ─────────────────────────────────── -->
+            @if (q.type === 'dragdrop') {
+
+              <!-- Image upload -->
+              <div class="section-label">Hintergrundbild</div>
+              <label class="upload-label">
+                <input type="file" accept="image/*" style="display:none"
+                       (change)="onImageUpload($event, q.id)">
+                <span class="btn">{{ q.image ? 'Bild ersetzen' : 'Bild hochladen' }}</span>
+              </label>
+
+              @if (q.image) {
+                <div class="section-label" style="margin-top: 14px">
+                  Auf Bild klicken → Beschriftungsfeld platzieren
+                </div>
+                <div class="dd-editor-wrap" (click)="onImageClick($event, q.id)">
+                  <img [src]="q.image" class="dd-img" alt="">
+                  @for (zone of q.dropZones; track zone.id; let zi = $index) {
+                    <div class="zone-edit-marker"
+                         [style.left.%]="zone.x"
+                         [style.top.%]="zone.y"
+                         (click)="$event.stopPropagation()">
+                      <span class="zone-num">{{ zi + 1 }}</span>
+                      <button class="del-zone-btn"
+                              (click)="qdata.deleteDropZone(fcId()!, q.id, zone.id)">✕</button>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Beschriftungen (drag items) -->
+              <div class="section-label" style="margin-top: 14px">Beschriftungen</div>
+              @for (item of q.dragItems; track item.id) {
+                <div class="choice-edit-row">
+                  <input class="inp grow" type="text" [ngModel]="item.label" placeholder="Beschriftung…"
+                         (ngModelChange)="qdata.patchDragItem(fcId()!, q.id, item.id, $event)">
+                  <button class="del-item" (click)="qdata.deleteDragItem(fcId()!, q.id, item.id)">✕</button>
+                </div>
+              }
+              <button class="add-item-btn" (click)="qdata.addDragItem(fcId()!, q.id)">+ Beschriftung</button>
+
+              <!-- Zone → Item mapping -->
+              @if (q.dropZones.length > 0 && q.dragItems.length > 0) {
+                <div class="section-label" style="margin-top: 14px">Richtige Zuordnung</div>
+                @for (zone of q.dropZones; track zone.id; let zi = $index) {
+                  <div class="zone-map-row">
+                    <span class="zone-num-label">Zone {{ zi + 1 }}</span>
+                    <select class="inp"
+                            [ngModel]="zone.correctItemId"
+                            (ngModelChange)="qdata.patchDropZone(fcId()!, q.id, zone.id, { correctItemId: $event })">
+                      <option [ngValue]="null">– nicht zugeordnet –</option>
+                      @for (item of q.dragItems; track item.id) {
+                        <option [ngValue]="item.id">{{ item.label }}</option>
+                      }
+                    </select>
+                  </div>
+                }
+              }
+            }
+
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Save status -->
+    @if (qdata.saveStatus() !== 'idle') {
+      <div class="save-note"
+           [class.saving]="qdata.saveStatus() === 'saving'"
+           [class.saved]="qdata.saveStatus() === 'saved'"
+           [class.pending]="qdata.saveStatus() === 'pending'"
+           [class.error]="qdata.saveStatus() === 'error'">
+        {{ qdata.saveStatus() === 'saving' ? 'Speichern…' :
+           qdata.saveStatus() === 'saved'  ? 'Gespeichert ✓' :
+           qdata.saveStatus() === 'pending' ? 'Antrag eingereicht ⏳' : 'Fehler beim Speichern' }}
+      </div>
+    }
+
+  }
+
+</div>

@@ -46,7 +46,7 @@
               }
 
               <div class="choices">
-                @for (c of q.choices; track c.id) {
+                @for (c of shuffledChoices(); track c.id) {
                   <button class="choice-btn"
                           [class.selected]="selectedIds().has(c.id)"
                           [class.correct]="practiceState() === 'checked' && c.correct"
@@ -150,7 +150,7 @@
               }
 
               <div class="drag-pool">
-                @for (item of q.dragItems; track item.id) {
+                @for (item of shuffledDragItems(); track item.id) {
                   <button class="drag-chip"
                           [class.placed]="isItemPlaced(item.id)"
                           [class.active-chip]="selectedDragId() === item.id"

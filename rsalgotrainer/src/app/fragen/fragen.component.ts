@@ -52,8 +52,9 @@ export class FragenComponent {
   placements     = signal<Record<string, string>>({});
 
   // ── Match state ───────────────────────────────────────────────────────────────
-  matchSelections  = signal<Record<string, string | undefined>>({});
-  private _shuffleSeed = signal(Math.random());
+  matchSelections      = signal<Record<string, string | undefined>>({});
+  private _shuffleSeed      = signal(Math.random());
+  private _questionOrderSeed = signal(Math.random());
 
   // Pointer-based chip drag (practice)
   practiceDragItem = signal<{ itemId: string; label: string; clientX: number; clientY: number } | null>(null);
@@ -132,22 +133,43 @@ export class FragenComponent {
     })
   );
 
-  readonly shuffledMatchOptions = computed((): MatchPair[] => {
-    const q = this.currentQ();
-    const seed = this._shuffleSeed();
-    if (!q || q.type !== 'match') return [];
-    const pairs = [...q.matchPairs];
+  private _lcgShuffle<T>(arr: T[], seed: number): T[] {
+    const out = [...arr];
     let s = (seed * 2147483647) | 0;
-    for (let i = pairs.length - 1; i > 0; i--) {
+    for (let i = out.length - 1; i > 0; i--) {
       s = Math.imul(s, 1664525) + 1013904223 | 0;
       const j = Math.abs(s) % (i + 1);
-      [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+      [out[i], out[j]] = [out[j], out[i]];
     }
-    return pairs;
+    return out;
+  }
+
+  readonly shuffledChoices = computed(() => {
+    const q = this.currentQ();
+    const seed = this._shuffleSeed();
+    if (!q || (q.type !== 'single' && q.type !== 'multiple')) return [];
+    return this._lcgShuffle(q.choices, seed);
   });
 
+  readonly shuffledDragItems = computed(() => {
+    const q = this.currentQ();
+    const seed = this._shuffleSeed();
+    if (!q || q.type !== 'dragdrop') return [];
+    return this._lcgShuffle(q.dragItems, seed);
+  });
+
+  readonly shuffledMatchOptions = computed((): MatchPair[] => {
+    const q = this.currentQ();
+    if (!q || q.type !== 'match') return [];
+    return [...q.matchPairs].sort((a, b) => a.right.localeCompare(b.right, 'de'));
+  });
+
+  readonly practiceQuestionsShuffled = computed(() =>
+    this._lcgShuffle(this.practiceQuestions(), this._questionOrderSeed())
+  );
+
   readonly currentQ = computed(() =>
-    this.practiceQuestions()[this.practiceIdx()] ?? null
+    this.practiceQuestionsShuffled()[this.practiceIdx()] ?? null
   );
 
   constructor() {
@@ -174,6 +196,7 @@ export class FragenComponent {
     this._chipIsDragging = false;
     this.matchSelections.set({});
     this._shuffleSeed.set(Math.random());
+    this._questionOrderSeed.set(Math.random());
   }
 
   toggleChoice(choiceId: string): void {

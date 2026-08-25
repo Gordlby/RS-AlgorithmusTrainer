@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AlgoDataService } from '../services/algo-data.service';
 import { AuthService } from '../services/auth.service';
 import { QuestionDataService } from '../services/question-data.service';
-import { Question, QuestionType } from '../models/question';
+import { MatchPair, Question, QuestionType } from '../models/question';
 
 type PracticeState = 'picking' | 'checked' | 'done';
 
@@ -51,6 +51,10 @@ export class FragenComponent {
   selectedDragId = signal<string | null>(null);
   placements     = signal<Record<string, string>>({});
 
+  // ── Match state ───────────────────────────────────────────────────────────────
+  matchSelections  = signal<Record<string, string | undefined>>({});
+  private _shuffleSeed = signal(Math.random());
+
   // Pointer-based chip drag (practice)
   practiceDragItem = signal<{ itemId: string; label: string; clientX: number; clientY: number } | null>(null);
   private _chipDragStart: ChipDragStart | null = null;
@@ -79,9 +83,26 @@ export class FragenComponent {
       if (q.type === 'dragdrop') {
         return !!q.image && q.dropZones.length > 0 && q.dragItems.length > 0;
       }
+      if (q.type === 'match') {
+        return q.matchPairs.length >= 2 && q.matchPairs.every(p => p.left.trim() && p.right.trim());
+      }
       return q.text.trim().length > 0 && q.choices.length >= 2;
     })
   );
+
+  readonly shuffledMatchOptions = computed((): MatchPair[] => {
+    const q = this.currentQ();
+    const seed = this._shuffleSeed();
+    if (!q || q.type !== 'match') return [];
+    const pairs = [...q.matchPairs];
+    let s = (seed * 2147483647) | 0;
+    for (let i = pairs.length - 1; i > 0; i--) {
+      s = Math.imul(s, 1664525) + 1013904223 | 0;
+      const j = Math.abs(s) % (i + 1);
+      [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+    }
+    return pairs;
+  });
 
   readonly currentQ = computed(() =>
     this.practiceQuestions()[this.practiceIdx()] ?? null
@@ -109,6 +130,8 @@ export class FragenComponent {
     this.practiceDragItem.set(null);
     this._chipDragStart = null;
     this._chipIsDragging = false;
+    this.matchSelections.set({});
+    this._shuffleSeed.set(Math.random());
   }
 
   toggleChoice(choiceId: string): void {
@@ -132,9 +155,13 @@ export class FragenComponent {
       const sel = this.selectedIds();
       const ok = correctIds.size === sel.size && [...correctIds].every(id => sel.has(id));
       if (ok) this.score.update(s => s + 1);
-    } else {
+    } else if (q.type === 'dragdrop') {
       const places = this.placements();
       const ok = q.dropZones.every(dz => places[dz.id] === dz.correctItemId);
+      if (ok) this.score.update(s => s + 1);
+    } else if (q.type === 'match') {
+      const sel = this.matchSelections();
+      const ok = q.matchPairs.length > 0 && q.matchPairs.every(p => sel[p.id] === p.id);
       if (ok) this.score.update(s => s + 1);
     }
   }
@@ -150,6 +177,8 @@ export class FragenComponent {
       this.selectedDragId.set(null);
       this.placements.set({});
       this.practiceDragItem.set(null);
+      this.matchSelections.set({});
+      this._shuffleSeed.set(Math.random());
     }
   }
 
@@ -192,6 +221,17 @@ export class FragenComponent {
     this.placements.set({});
     this.selectedDragId.set(null);
     this.practiceDragItem.set(null);
+  }
+
+  // ── Match methods ─────────────────────────────────────────────────────────────
+
+  onMatchSelect(leftPairId: string, rightPairId: string): void {
+    if (this.practiceState() !== 'picking') return;
+    this.matchSelections.update(s => ({ ...s, [leftPairId]: rightPairId }));
+  }
+
+  resetMatchState(): void {
+    this.matchSelections.set({});
   }
 
   // ── Editor methods ────────────────────────────────────────────────────────────
@@ -371,7 +411,8 @@ export class FragenComponent {
     const map: Record<QuestionType, string> = {
       single: 'Single Choice',
       multiple: 'Multiple Choice',
-      dragdrop: 'Beschriftung'
+      dragdrop: 'Beschriftung',
+      match: 'Zuordnen'
     };
     return map[type];
   }

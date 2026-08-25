@@ -74,6 +74,45 @@
               </div>
             }
 
+            <!-- ── Zuordnen (Match) ── -->
+            @if (q.type === 'match') {
+              @if (q.text) { <div class="q-text">{{ q.text }}</div> }
+
+              <div class="match-table">
+                @for (p of q.matchPairs; track p.id) {
+                  <div class="match-row"
+                       [class.correct]="practiceState() === 'checked' && matchSelections()[p.id] === p.id"
+                       [class.wrong]="practiceState() === 'checked' && matchSelections()[p.id] !== p.id">
+                    <span class="match-left">{{ p.left }}</span>
+                    <select class="match-select inp"
+                            [ngModel]="matchSelections()[p.id] ?? ''"
+                            (ngModelChange)="onMatchSelect(p.id, $event)"
+                            [disabled]="practiceState() === 'checked'">
+                      <option value="">— wählen —</option>
+                      @for (opt of shuffledMatchOptions(); track opt.id) {
+                        <option [value]="opt.id">{{ opt.right }}</option>
+                      }
+                    </select>
+                    @if (practiceState() === 'checked' && matchSelections()[p.id] !== p.id) {
+                      <span class="match-correct-hint">✓ {{ p.right }}</span>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="quiz-actions">
+                @if (practiceState() === 'picking') {
+                  <button class="btn" (click)="resetMatchState()">Zurücksetzen</button>
+                  <button class="btn primary" (click)="checkAnswer()">Überprüfen</button>
+                }
+                @if (practiceState() === 'checked') {
+                  <button class="btn primary" (click)="nextQuestion()">
+                    {{ practiceIdx() + 1 < practiceQuestions().length ? 'Nächste Frage →' : 'Auswertung' }}
+                  </button>
+                }
+              </div>
+            }
+
             <!-- ── Beschriftung (Drag-Drop) ── -->
             @if (q.type === 'dragdrop') {
               @if (q.text) { <div class="q-text">{{ q.text }}</div> }
@@ -164,6 +203,7 @@
             <button class="type-btn" (click)="addQuestion('single')">Single Choice</button>
             <button class="type-btn" (click)="addQuestion('multiple')">Multiple Choice</button>
             <button class="type-btn" (click)="addQuestion('dragdrop')">Beschriftung</button>
+            <button class="type-btn" (click)="addQuestion('match')">Zuordnen</button>
             <button class="type-btn cancel" (click)="showTypePick.set(false)">Abbrechen</button>
           </div>
         }
@@ -215,6 +255,24 @@
                 </div>
               }
               <button class="add-item-btn" (click)="qdata.addChoice(fcId()!, q.id)">+ Antwort</button>
+            }
+
+            <!-- Zuordnen ─────────────────────────────────────────────────── -->
+            @if (q.type === 'match') {
+              <div class="section-label">Begriffspaare
+                <span class="section-hint">(links → rechts)</span>
+              </div>
+              @for (pair of q.matchPairs; track pair.id) {
+                <div class="match-pair-row">
+                  <input class="inp grow" type="text" [ngModel]="pair.left" placeholder="Begriff links…"
+                         (ngModelChange)="qdata.patchMatchPair(fcId()!, q.id, pair.id, { left: $event })">
+                  <span class="match-sep">→</span>
+                  <input class="inp grow" type="text" [ngModel]="pair.right" placeholder="Begriff rechts…"
+                         (ngModelChange)="qdata.patchMatchPair(fcId()!, q.id, pair.id, { right: $event })">
+                  <button class="del-item" (click)="qdata.deleteMatchPair(fcId()!, q.id, pair.id)">✕</button>
+                </div>
+              }
+              <button class="add-item-btn" (click)="qdata.addMatchPair(fcId()!, q.id)">+ Paar</button>
             }
 
             <!-- Beschriftung (Drag-Drop) ─────────────────────────────────── -->

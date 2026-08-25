@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { StorageAdapterService } from './storage-adapter.service';
-import { Choice, DragItem, DropZone, Question, QuestionType } from '../models/question';
+import { Choice, DragItem, DropZone, MatchPair, Question, QuestionType } from '../models/question';
 
 const QSET_KEY = (fcId: string) => `v2-qset:${fcId}`;
 
@@ -27,6 +27,7 @@ export class QuestionDataService {
     const str = await this.storage.get(QSET_KEY(fcId));
     const questions: Question[] = str ? JSON.parse(str) : [];
     for (const q of questions) {
+      if (!q.matchPairs) q.matchPairs = [];
       for (const dz of q.dropZones) {
         if (dz.w == null) dz.w = 15;
         if (dz.h == null) dz.h = 8;
@@ -64,12 +65,18 @@ export class QuestionDataService {
   addQuestion(fcId: string, type: QuestionType): string {
     const q: Question = {
       id: this.uid(), type, text: '',
-      image: null, choices: [], dragItems: [], dropZones: []
+      image: null, choices: [], dragItems: [], dropZones: [], matchPairs: []
     };
     if (type === 'single' || type === 'multiple') {
       q.choices = [
         { id: this.uid(), text: '', correct: true  },
         { id: this.uid(), text: '', correct: false },
+      ];
+    }
+    if (type === 'match') {
+      q.matchPairs = [
+        { id: this.uid(), left: '', right: '' },
+        { id: this.uid(), left: '', right: '' },
       ];
     }
     this.sets.update(s => ({ ...s, [fcId]: [...(s[fcId] ?? []), q] }));
@@ -203,6 +210,42 @@ export class QuestionDataService {
           ...q,
           dropZones: q.dropZones.map(dz => dz.id === zoneId ? { ...dz, ...changes } : dz)
         }
+      )
+    }));
+    this.scheduleSave(fcId);
+  }
+
+  // ── Match pairs ─────────────────────────────────────────────────────────────
+
+  addMatchPair(fcId: string, qId: string): void {
+    const pair: MatchPair = { id: this.uid(), left: '', right: '' };
+    this.sets.update(s => ({
+      ...s,
+      [fcId]: (s[fcId] ?? []).map(q =>
+        q.id === qId ? { ...q, matchPairs: [...q.matchPairs, pair] } : q
+      )
+    }));
+    this.scheduleSave(fcId);
+  }
+
+  patchMatchPair(fcId: string, qId: string, pairId: string, changes: Partial<MatchPair>): void {
+    this.sets.update(s => ({
+      ...s,
+      [fcId]: (s[fcId] ?? []).map(q =>
+        q.id !== qId ? q : {
+          ...q,
+          matchPairs: q.matchPairs.map(p => p.id === pairId ? { ...p, ...changes } : p)
+        }
+      )
+    }));
+    this.scheduleSave(fcId);
+  }
+
+  deleteMatchPair(fcId: string, qId: string, pairId: string): void {
+    this.sets.update(s => ({
+      ...s,
+      [fcId]: (s[fcId] ?? []).map(q =>
+        q.id !== qId ? q : { ...q, matchPairs: q.matchPairs.filter(p => p.id !== pairId) }
       )
     }));
     this.scheduleSave(fcId);

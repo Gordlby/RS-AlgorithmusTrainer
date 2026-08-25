@@ -1,4 +1,4 @@
-export type QuestionType = 'single' | 'multiple' | 'dragdrop';
+export type QuestionType = 'single' | 'multiple' | 'dragdrop' | 'match';
 
 export interface Choice {
   id: string;
@@ -20,6 +20,12 @@ export interface DropZone {
   correctItemId: string | null;
 }
 
+export interface MatchPair {
+  id: string;
+  left: string;
+  right: string;
+}
+
 export interface Question {
   id: string;
   type: QuestionType;
@@ -28,4 +34,5 @@ export interface Question {
   choices: Choice[];
   dragItems: DragItem[];
   dropZones: DropZone[];
+  matchPairs: MatchPair[];
 }

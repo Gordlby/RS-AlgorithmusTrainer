@@ -120,47 +120,119 @@ router.put('/password', (req: Request, res: Response): void => {
 
 /**
  * GET /admin/export
- * Exportiert alle kv_store-Einträge als JSON.
+ * Exportiert alle kv_store-Einträge als lesbares JSON (segmentiert nach Typ).
  */
 router.get('/export', (_req: Request, res: Response): void => {
   const rows = db.prepare('SELECT key, value FROM kv_store ORDER BY key').all() as { key: string; value: string }[];
-  res.json({ entries: rows, exportedAt: new Date().toISOString() });
+
+  const result: {
+    version: number;
+    exportedAt: string;
+    algorithms: unknown[];
+    index: unknown;
+    mnemonics: unknown;
+    questions: Record<string, unknown>;
+  } = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    algorithms: [],
+    index: [],
+    mnemonics: [],
+    questions: {},
+  };
+
+  for (const row of rows) {
+    try {
+      const parsed: unknown = JSON.parse(row.value);
+      if (row.key === 'v2-index') {
+        result.index = parsed;
+      } else if (row.key === 'v2-mnemonics') {
+        result.mnemonics = parsed;
+      } else if (row.key.startsWith('v2-fc:')) {
+        result.algorithms.push(parsed);
+      } else if (row.key.startsWith('v2-qset:')) {
+        result.questions[row.key.slice('v2-qset:'.length)] = parsed;
+      }
+    } catch { /* skip malformed entries */ }
+  }
+
+  res.json(result);
 });
 
 /**
  * POST /admin/import
- * Importiert kv_store-Einträge aus JSON.
- * Body: { entries: [{key, value}], filter?: 'all' | 'algorithms' | 'questions' }
+ * Importiert Daten aus einem Export-JSON.
+ * Unterstützt das alte Format { entries: [{key, value}] } sowie das
+ * aktuelle segmentierte Format { algorithms, index, mnemonics, questions }.
+ * Body enthält optional filter: 'all' | 'algorithms' | 'questions'
  */
 router.post('/import', (req: Request, res: Response): void => {
-  const { entries, filter } = req.body ?? {};
-  if (!Array.isArray(entries)) {
-    res.status(400).json({ error: 'entries (Array) erforderlich' }); return;
-  }
+  const body = req.body ?? {};
+  const filter: string = body.filter ?? 'all';
 
   const upsert = db.prepare(`
     INSERT INTO kv_store (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
   `);
 
-  const importMany = db.transaction((rows: { key: string; value: string }[]) => {
-    let count = 0;
-    for (const row of rows) {
-      if (typeof row.key !== 'string' || typeof row.value !== 'string') continue;
-      if (filter === 'algorithms') {
-        if (!row.key.startsWith('v2-fc:') && row.key !== 'v2-index' && row.key !== 'v2-mnemonics') continue;
-      } else if (filter === 'questions') {
-        if (!row.key.startsWith('v2-qset:')) continue;
+  // ── Altes Format: { entries: [{key, value}] } ──────────────────────────────
+  if (Array.isArray(body.entries)) {
+    const importOld = db.transaction((entries: { key: string; value: string }[]) => {
+      let count = 0;
+      for (const row of entries) {
+        if (typeof row.key !== 'string' || typeof row.value !== 'string') continue;
+        if (filter === 'algorithms' && !row.key.startsWith('v2-fc:') && row.key !== 'v2-index' && row.key !== 'v2-mnemonics') continue;
+        if (filter === 'questions' && !row.key.startsWith('v2-qset:')) continue;
+        upsert.run(row.key, row.value);
+        count++;
       }
-      upsert.run(row.key, row.value);
-      count++;
+      return count;
+    });
+    try {
+      res.json({ success: true, imported: importOld(body.entries as { key: string; value: string }[]) });
+    } catch {
+      res.status(500).json({ error: 'Import fehlgeschlagen' });
     }
+    return;
+  }
+
+  // ── Neues Format: { version, algorithms, index, mnemonics, questions } ─────
+  const importNew = db.transaction(() => {
+    let count = 0;
+    const doAlgos = filter === 'all' || filter === 'algorithms';
+    const doQs    = filter === 'all' || filter === 'questions';
+
+    if (doAlgos) {
+      if (body.index !== undefined) {
+        upsert.run('v2-index', JSON.stringify(body.index));
+        count++;
+      }
+      if (body.mnemonics !== undefined) {
+        upsert.run('v2-mnemonics', JSON.stringify(body.mnemonics));
+        count++;
+      }
+      if (Array.isArray(body.algorithms)) {
+        for (const algo of body.algorithms as { id?: string }[]) {
+          if (typeof algo?.id === 'string') {
+            upsert.run(`v2-fc:${algo.id}`, JSON.stringify(algo));
+            count++;
+          }
+        }
+      }
+    }
+
+    if (doQs && body.questions && typeof body.questions === 'object') {
+      for (const [fcId, qs] of Object.entries(body.questions as Record<string, unknown>)) {
+        upsert.run(`v2-qset:${fcId}`, JSON.stringify(qs));
+        count++;
+      }
+    }
+
     return count;
   });
 
   try {
-    const count = importMany(entries as { key: string; value: string }[]);
-    res.json({ success: true, imported: count });
+    res.json({ success: true, imported: importNew() });
   } catch {
     res.status(500).json({ error: 'Import fehlgeschlagen' });
   }

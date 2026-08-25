@@ -240,11 +240,10 @@ export class AdminRequestsComponent implements OnInit {
     try {
       const text = await this.importFile.text();
       const data = JSON.parse(text);
-      const entries: unknown[] = Array.isArray(data) ? data : (data.entries ?? []);
       const res = await firstValueFrom(
         this.http.post<{ imported: number }>(
           `${this.baseUrl}/admin/import`,
-          { entries, filter: this.importFilter() },
+          { ...data, filter: this.importFilter() },
           { headers: this.headers }
         )
       );

@@ -67,8 +67,50 @@ export class FragenComponent {
   get editorDragging(): boolean { return !!this._editorDrag; }
 
   // ── Editor UI ────────────────────────────────────────────────────────────────
-  expandedId   = signal<string | null>(null);
-  showTypePick = signal(false);
+  expandedId    = signal<string | null>(null);
+  showTypePick  = signal(false);
+  showJsonImport = signal(false);
+  jsonImportText = signal('');
+  jsonImportMsg  = signal('');
+
+  readonly exampleJson = JSON.stringify([
+    {
+      type: 'single',
+      text: 'Was ist die Hauptaufgabe des Herzens?',
+      choices: [
+        { text: 'Blut durch den Körper pumpen', correct: true },
+        { text: 'Sauerstoff produzieren', correct: false },
+        { text: 'Nahrung verdauen', correct: false }
+      ]
+    },
+    {
+      type: 'multiple',
+      text: 'Welche Werte gehören zu den Vitalparametern?',
+      choices: [
+        { text: 'Puls', correct: true },
+        { text: 'Blutdruck', correct: true },
+        { text: 'Körpergröße', correct: false },
+        { text: 'Atemfrequenz', correct: true }
+      ]
+    },
+    {
+      type: 'match',
+      text: 'Ordne die Begriffe richtig zu.',
+      matchPairs: [
+        { left: 'Systole', right: 'Herzmuskel zieht sich zusammen' },
+        { left: 'Diastole', right: 'Herzmuskel entspannt sich' },
+        { left: 'Herzfrequenz', right: 'Schläge pro Minute' }
+      ]
+    },
+    {
+      type: 'dragdrop',
+      text: 'Beschrifte die Abbildung. (Bild danach im Editor hochladen)',
+      dragItems: [
+        { label: 'Begriff A' },
+        { label: 'Begriff B' }
+      ]
+    }
+  ], null, 2);
 
   // ── Computed ─────────────────────────────────────────────────────────────────
   readonly fcId = computed(() => this.data.currentId());
@@ -405,6 +447,81 @@ export class FragenComponent {
     }
 
     this._chipDragStart = null;
+  }
+
+  toggleJsonImport(): void {
+    this.showJsonImport.update(v => !v);
+    this.showTypePick.set(false);
+  }
+
+  // ── JSON Import ───────────────────────────────────────────────────────────────
+
+  doJsonImport(): void {
+    const id = this.fcId();
+    if (!id) return;
+    const text = this.jsonImportText().trim();
+    if (!text) { this.jsonImportMsg.set('Kein JSON eingegeben.'); return; }
+
+    let parsed: unknown;
+    try { parsed = JSON.parse(text); }
+    catch { this.jsonImportMsg.set('Fehler: Ungültiges JSON-Format.'); return; }
+
+    if (!Array.isArray(parsed)) {
+      this.jsonImportMsg.set('Fehler: JSON muss ein Array sein ([ … ]).');
+      return;
+    }
+
+    const validTypes = new Set(['single', 'multiple', 'dragdrop', 'match']);
+    let added = 0;
+
+    for (const raw of parsed) {
+      if (typeof raw !== 'object' || raw === null) continue;
+      const r = raw as Record<string, unknown>;
+      const type = r['type'] as string;
+      if (!validTypes.has(type)) continue;
+
+      const q: Question = {
+        id: this.qdata.uid(), type: type as QuestionType,
+        text: typeof r['text'] === 'string' ? r['text'] : '',
+        image: null, choices: [], dragItems: [], dropZones: [], matchPairs: []
+      };
+
+      if ((type === 'single' || type === 'multiple') && Array.isArray(r['choices'])) {
+        q.choices = (r['choices'] as Record<string, unknown>[]).map(c => ({
+          id: this.qdata.uid(),
+          text: typeof c['text'] === 'string' ? c['text'] : '',
+          correct: c['correct'] === true
+        }));
+      }
+
+      if (type === 'match' && Array.isArray(r['matchPairs'])) {
+        q.matchPairs = (r['matchPairs'] as Record<string, unknown>[]).map(p => ({
+          id: this.qdata.uid(),
+          left:  typeof p['left']  === 'string' ? p['left']  : '',
+          right: typeof p['right'] === 'string' ? p['right'] : ''
+        }));
+      }
+
+      if (type === 'dragdrop' && Array.isArray(r['dragItems'])) {
+        q.dragItems = (r['dragItems'] as Record<string, unknown>[]).map(d => ({
+          id: this.qdata.uid(),
+          label: typeof d['label'] === 'string' ? d['label'] : ''
+        }));
+      }
+
+      this.qdata.sets.update(s => ({ ...s, [id]: [...(s[id] ?? []), q] }));
+      added++;
+    }
+
+    if (added === 0) {
+      this.jsonImportMsg.set('Keine gültigen Fragen gefunden (type prüfen).');
+      return;
+    }
+
+    this.qdata.persist(id).then();
+    this.jsonImportMsg.set(`${added} Frage${added === 1 ? '' : 'n'} importiert ✓`);
+    this.jsonImportText.set('');
+    setTimeout(() => { this.jsonImportMsg.set(''); this.showJsonImport.set(false); }, 3000);
   }
 
   typeLabel(type: QuestionType): string {

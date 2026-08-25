@@ -620,6 +620,67 @@
 
 // ─── Mobile ───────────────────────────────────────────────────────────────────
 
+// ─── JSON Import ─────────────────────────────────────────────────────────────
+
+.btn-xs {
+  padding: .2rem .6rem;
+  font-size: .75rem;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  &:hover { border-color: var(--lime); color: var(--lime); }
+}
+
+.json-import-panel {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.json-import-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: .82rem;
+  color: var(--muted);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+}
+
+.json-ta {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0a0f0d;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: #c0d0c8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .78rem;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 160px;
+  &:focus { outline: none; border-color: #ccff33; }
+}
+
+.json-import-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.json-msg {
+  margin-top: 8px;
+  font-size: .82rem;
+  color: #4fd1a5;
+  font-family: 'Space Grotesk', sans-serif;
+  &.err { color: #ff4d3d; }
+}
+
 // ─── Zuordnen (Match) ────────────────────────────────────────────────────────
 
 .match-table {

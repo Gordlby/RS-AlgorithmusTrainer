@@ -197,7 +197,8 @@
       <span class="edit-title">Fragen</span>
       <div class="type-pick-wrap">
         @if (!showTypePick()) {
-          <button class="btn primary" (click)="showTypePick.set(true)">+ Neue Frage</button>
+          <button class="btn" (click)="toggleJsonImport()">↓ JSON</button>
+          <button class="btn primary" (click)="showTypePick.set(true); showJsonImport.set(false)">+ Neue Frage</button>
         } @else {
           <div class="type-pick">
             <button class="type-btn" (click)="addQuestion('single')">Single Choice</button>
@@ -209,6 +210,29 @@
         }
       </div>
     </div>
+
+    @if (showJsonImport()) {
+      <div class="json-import-panel">
+        <div class="json-import-head">
+          <span>JSON-Fragen importieren</span>
+          <button class="btn btn-xs" (click)="jsonImportText.set(exampleJson)">Beispiel laden</button>
+        </div>
+        <textarea class="json-ta"
+                  [ngModel]="jsonImportText()"
+                  (ngModelChange)="jsonImportText.set($event)"
+                  placeholder="JSON-Array hier einfügen, z.B.: [{ &quot;type&quot;: &quot;single&quot;, ... }]"
+                  rows="10"></textarea>
+        <div class="json-import-actions">
+          <button class="btn primary" (click)="doJsonImport()">Importieren</button>
+          <button class="btn" (click)="showJsonImport.set(false); jsonImportMsg.set('')">Schließen</button>
+        </div>
+        @if (jsonImportMsg()) {
+          <div class="json-msg" [class.err]="jsonImportMsg().startsWith('Fehler') || jsonImportMsg().startsWith('Keine')">
+            {{ jsonImportMsg() }}
+          </div>
+        }
+      </div>
+    }
 
     @if (questions().length === 0) {
       <div class="empty-note">Noch keine Fragen vorhanden.</div>

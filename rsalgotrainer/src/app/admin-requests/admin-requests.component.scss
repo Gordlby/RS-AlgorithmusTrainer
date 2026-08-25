@@ -154,3 +154,45 @@ h3 { margin: 0 0 .8rem; font-size: .95rem; color: #ccff33; }
 .user-actions { display: flex; gap: .4rem; }
 
 .code-edit-row { display: flex; gap: .4rem; align-items: center; }
+
+// ── Import / Export ──────────────────────────────────────────────────────────
+.backup-card {
+  background: #111; border: 1px solid #2a3a32; border-radius: 8px;
+  padding: 1.2rem; margin-bottom: 1rem;
+
+  h3 { margin-bottom: .4rem; }
+}
+
+.backup-desc {
+  font-size: .85rem; color: #8a9e96; margin: 0 0 1rem;
+}
+
+.import-row {
+  margin-bottom: .75rem;
+
+  .field-label {
+    display: flex; flex-direction: column; gap: .3rem;
+    font-size: .82rem; color: #8a9e96;
+    select { margin-top: .2rem; }
+  }
+}
+
+.upload-label { cursor: pointer; }
+
+.file-name {
+  display: inline-block; margin-left: .75rem;
+  font-size: .82rem; color: #4fd1a5;
+}
+
+.import-warning {
+  margin-top: .75rem; font-size: .78rem; color: #5c7168;
+}
+
+.error-banner {
+  border-color: #ff4d3d !important; color: #ff4d3d !important;
+}
+
+.btn.primary {
+  background: rgba(204,255,51,.1); border-color: #ccff33; color: #ccff33;
+  &:disabled { opacity: .4; cursor: not-allowed; }
+}

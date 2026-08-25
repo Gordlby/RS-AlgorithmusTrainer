@@ -118,4 +118,52 @@ router.put('/password', (req: Request, res: Response): void => {
   res.json({ success: true });
 });
 
+/**
+ * GET /admin/export
+ * Exportiert alle kv_store-Einträge als JSON.
+ */
+router.get('/export', (_req: Request, res: Response): void => {
+  const rows = db.prepare('SELECT key, value FROM kv_store ORDER BY key').all() as { key: string; value: string }[];
+  res.json({ entries: rows, exportedAt: new Date().toISOString() });
+});
+
+/**
+ * POST /admin/import
+ * Importiert kv_store-Einträge aus JSON.
+ * Body: { entries: [{key, value}], filter?: 'all' | 'algorithms' | 'questions' }
+ */
+router.post('/import', (req: Request, res: Response): void => {
+  const { entries, filter } = req.body ?? {};
+  if (!Array.isArray(entries)) {
+    res.status(400).json({ error: 'entries (Array) erforderlich' }); return;
+  }
+
+  const upsert = db.prepare(`
+    INSERT INTO kv_store (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+  `);
+
+  const importMany = db.transaction((rows: { key: string; value: string }[]) => {
+    let count = 0;
+    for (const row of rows) {
+      if (typeof row.key !== 'string' || typeof row.value !== 'string') continue;
+      if (filter === 'algorithms') {
+        if (!row.key.startsWith('v2-fc:') && row.key !== 'v2-index' && row.key !== 'v2-mnemonics') continue;
+      } else if (filter === 'questions') {
+        if (!row.key.startsWith('v2-qset:')) continue;
+      }
+      upsert.run(row.key, row.value);
+      count++;
+    }
+    return count;
+  });
+
+  try {
+    const count = importMany(entries as { key: string; value: string }[]);
+    res.json({ success: true, imported: count });
+  } catch {
+    res.status(500).json({ error: 'Import fehlgeschlagen' });
+  }
+});
+
 export default router;

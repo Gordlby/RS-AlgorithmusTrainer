@@ -38,7 +38,7 @@ export class AdminRequestsComponent implements OnInit {
   readonly network = inject(NetworkService);
   private baseUrl = inject(API_URL);
 
-  tab = signal<'requests' | 'users'>('requests');
+  tab = signal<'requests' | 'users' | 'backup'>('requests');
 
   requests = signal<ChangeRequest[]>([]);
   loading  = signal(true);
@@ -60,7 +60,13 @@ export class AdminRequestsComponent implements OnInit {
 
   async ngOnInit(): Promise<void> { await this.load(); await this.loadUsers(); }
 
-  async setTab(t: 'requests' | 'users'): Promise<void> {
+  // ─── Import / Export ──────────────────────────────────────────────────────
+  importFilter = signal<'all' | 'algorithms' | 'questions'>('all');
+  importMsg    = signal('');
+  exportMsg    = signal('');
+  importFile: File | null = null;
+
+  async setTab(t: 'requests' | 'users' | 'backup'): Promise<void> {
     this.tab.set(t);
     if (t === 'users') await this.loadUsers();
   }
@@ -200,6 +206,57 @@ export class AdminRequestsComponent implements OnInit {
   }
 
   cancelEditCode(): void { this.editingCodeId.set(null); }
+
+  // ─── Export ───────────────────────────────────────────────────────────────
+  async exportData(): Promise<void> {
+    try {
+      const data = await firstValueFrom(
+        this.http.get(`${this.baseUrl}/admin/export`, { headers: this.headers })
+      );
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rs-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.exportMsg.set('Export erfolgreich ✓');
+    } catch {
+      this.exportMsg.set('Export fehlgeschlagen');
+    }
+    setTimeout(() => this.exportMsg.set(''), 4000);
+  }
+
+  // ─── Import ───────────────────────────────────────────────────────────────
+  onImportFile(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    this.importFile = file ?? null;
+  }
+
+  async doImport(): Promise<void> {
+    if (!this.importFile) { this.importMsg.set('Keine Datei ausgewählt.'); return; }
+    try {
+      const text = await this.importFile.text();
+      const data = JSON.parse(text);
+      const entries: unknown[] = Array.isArray(data) ? data : (data.entries ?? []);
+      const res = await firstValueFrom(
+        this.http.post<{ imported: number }>(
+          `${this.baseUrl}/admin/import`,
+          { entries, filter: this.importFilter() },
+          { headers: this.headers }
+        )
+      );
+      this.importMsg.set(`${res.imported} Einträge importiert ✓`);
+    } catch {
+      this.importMsg.set('Import fehlgeschlagen – ungültige Datei?');
+    }
+    setTimeout(() => this.importMsg.set(''), 5000);
+  }
+
+  get importFilterStr(): string { return this.importFilter(); }
+  set importFilterStr(v: string) { this.importFilter.set(v as 'all' | 'algorithms' | 'questions'); }
 
   get newUsernameStr(): string { return this.newUsername(); }
   set newUsernameStr(v: string) { this.newUsername.set(v); }

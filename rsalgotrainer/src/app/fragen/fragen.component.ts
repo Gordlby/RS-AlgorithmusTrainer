@@ -7,7 +7,7 @@ import { Question, QuestionType } from '../models/question';
 
 type PracticeState = 'picking' | 'checked' | 'done';
 
-interface DragState {
+interface EditorDragState {
   type: 'move' | 'resize';
   qId: string;
   zoneId: string;
@@ -19,6 +19,13 @@ interface DragState {
   origY: number;
   origW: number;
   origH: number;
+}
+
+interface ChipDragStart {
+  itemId: string;
+  label: string;
+  cx: number;
+  cy: number;
 }
 
 @Component({
@@ -40,18 +47,24 @@ export class FragenComponent {
   score         = signal(0);
   selectedIds   = signal<Set<string>>(new Set());
 
-  // Drag-drop (click-to-select-then-place)
+  // Click-to-select fallback
   selectedDragId = signal<string | null>(null);
-  placements     = signal<Record<string, string>>({});   // zoneId → itemId
+  placements     = signal<Record<string, string>>({});
 
-  // ── Editor ──────────────────────────────────────────────────────────────────
+  // Pointer-based chip drag (practice)
+  practiceDragItem = signal<{ itemId: string; label: string; clientX: number; clientY: number } | null>(null);
+  private _chipDragStart: ChipDragStart | null = null;
+  private _chipIsDragging = false;
+  private _justDropped = false;
+
+  // ── Editor zone drag/resize ──────────────────────────────────────────────────
+  private _editorDrag: EditorDragState | null = null;
+  private _editorDragMoved = false;
+  get editorDragging(): boolean { return !!this._editorDrag; }
+
+  // ── Editor UI ────────────────────────────────────────────────────────────────
   expandedId   = signal<string | null>(null);
   showTypePick = signal(false);
-
-  // ── Zone drag/resize ────────────────────────────────────────────────────────
-  private _drag: DragState | null = null;
-  private _dragMoved = false;
-  get dragging(): boolean { return !!this._drag; }
 
   // ── Computed ─────────────────────────────────────────────────────────────────
   readonly fcId = computed(() => this.data.currentId());
@@ -93,6 +106,9 @@ export class FragenComponent {
     this.selectedIds.set(new Set());
     this.selectedDragId.set(null);
     this.placements.set({});
+    this.practiceDragItem.set(null);
+    this._chipDragStart = null;
+    this._chipIsDragging = false;
   }
 
   toggleChoice(choiceId: string): void {
@@ -133,24 +149,21 @@ export class FragenComponent {
       this.selectedIds.set(new Set());
       this.selectedDragId.set(null);
       this.placements.set({});
+      this.practiceDragItem.set(null);
     }
   }
 
-  // ── Drag-drop practice ────────────────────────────────────────────────────────
+  // ── Practice chip drag ───────────────────────────────────────────────────────
 
-  onDragItemClick(itemId: string): void {
+  onChipPointerDown(e: PointerEvent, itemId: string, label: string): void {
     if (this.practiceState() !== 'picking') return;
-    if (this.isItemPlaced(itemId)) {
-      const p = { ...this.placements() };
-      Object.keys(p).forEach(k => { if (p[k] === itemId) delete p[k]; });
-      this.placements.set(p);
-      this.selectedDragId.set(itemId);
-    } else {
-      this.selectedDragId.set(this.selectedDragId() === itemId ? null : itemId);
-    }
+    e.preventDefault();
+    this._chipDragStart = { itemId, label, cx: e.clientX, cy: e.clientY };
+    this._chipIsDragging = false;
   }
 
   onZoneClick(zoneId: string): void {
+    if (this._justDropped) { this._justDropped = false; return; }
     if (this.practiceState() !== 'picking') return;
     const itemId = this.selectedDragId();
     if (itemId) {
@@ -178,6 +191,7 @@ export class FragenComponent {
   resetDragDrop(): void {
     this.placements.set({});
     this.selectedDragId.set(null);
+    this.practiceDragItem.set(null);
   }
 
   // ── Editor methods ────────────────────────────────────────────────────────────
@@ -224,7 +238,7 @@ export class FragenComponent {
   }
 
   onImageClick(event: MouseEvent, qId: string, wrap: HTMLElement): void {
-    if (this._dragMoved) { this._dragMoved = false; return; }
+    if (this._editorDragMoved) { this._editorDragMoved = false; return; }
     const id = this.fcId();
     if (!id) return;
     const rect = wrap.getBoundingClientRect();
@@ -236,54 +250,121 @@ export class FragenComponent {
     this.qdata.addDropZone(id, qId, x, y);
   }
 
-  // ── Zone drag / resize (editor) ───────────────────────────────────────────────
-
-  startZoneDrag(e: MouseEvent | TouchEvent, qId: string, zoneId: string, type: 'move' | 'resize', wrap: HTMLElement): void {
+  startZoneDrag(e: PointerEvent, qId: string, zoneId: string, type: 'move' | 'resize', wrap: HTMLElement): void {
     e.preventDefault();
     e.stopPropagation();
     const rect = wrap.getBoundingClientRect();
-    const cx = e instanceof MouseEvent ? e.clientX : (e as TouchEvent).touches[0].clientX;
-    const cy = e instanceof MouseEvent ? e.clientY : (e as TouchEvent).touches[0].clientY;
     const id = this.fcId();
     if (!id) return;
     const zone = this.qdata.questionsFor(id).find(q => q.id === qId)?.dropZones.find(z => z.id === zoneId);
     if (!zone) return;
-    this._drag = {
+    this._editorDrag = {
       type, qId, zoneId,
-      startX: cx, startY: cy,
+      startX: e.clientX, startY: e.clientY,
       containerW: rect.width, containerH: rect.height,
       origX: zone.x, origY: zone.y,
       origW: zone.w, origH: zone.h,
     };
-    this._dragMoved = false;
+    this._editorDragMoved = false;
   }
 
-  @HostListener('document:mousemove', ['$event'])
-  @HostListener('document:touchmove', ['$event'])
-  onDocMove(e: MouseEvent | TouchEvent): void {
-    if (!this._drag) return;
-    const cx = e instanceof MouseEvent ? e.clientX : (e as TouchEvent).touches[0].clientX;
-    const cy = e instanceof MouseEvent ? e.clientY : (e as TouchEvent).touches[0].clientY;
-    const dx = ((cx - this._drag.startX) / this._drag.containerW) * 100;
-    const dy = ((cy - this._drag.startY) / this._drag.containerH) * 100;
-    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) this._dragMoved = true;
-    const id = this.fcId();
-    if (!id) return;
-    if (this._drag.type === 'move') {
-      const x = Math.max(0, Math.min(100 - this._drag.origW, this._drag.origX + dx));
-      const y = Math.max(0, Math.min(100 - this._drag.origH, this._drag.origY + dy));
-      this.qdata.patchDropZone(id, this._drag.qId, this._drag.zoneId, { x, y });
-    } else {
-      const w = Math.max(5, Math.min(95, this._drag.origW + dx));
-      const h = Math.max(4, Math.min(50, this._drag.origH + dy));
-      this.qdata.patchDropZone(id, this._drag.qId, this._drag.zoneId, { w, h });
+  // ── Unified pointer move / up ─────────────────────────────────────────────────
+
+  @HostListener('document:pointermove', ['$event'])
+  onDocPointerMove(e: PointerEvent): void {
+
+    // Editor zone drag takes priority
+    if (this._editorDrag) {
+      const dx = ((e.clientX - this._editorDrag.startX) / this._editorDrag.containerW) * 100;
+      const dy = ((e.clientY - this._editorDrag.startY) / this._editorDrag.containerH) * 100;
+      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) this._editorDragMoved = true;
+      const id = this.fcId();
+      if (!id) return;
+      if (this._editorDrag.type === 'move') {
+        const x = Math.max(0, Math.min(100 - this._editorDrag.origW, this._editorDrag.origX + dx));
+        const y = Math.max(0, Math.min(100 - this._editorDrag.origH, this._editorDrag.origY + dy));
+        this.qdata.patchDropZone(id, this._editorDrag.qId, this._editorDrag.zoneId, { x, y });
+      } else {
+        const w = Math.max(5, Math.min(95, this._editorDrag.origW + dx));
+        const h = Math.max(4, Math.min(50, this._editorDrag.origH + dy));
+        this.qdata.patchDropZone(id, this._editorDrag.qId, this._editorDrag.zoneId, { w, h });
+      }
+      return;
+    }
+
+    // Practice chip drag
+    if (!this._chipDragStart) return;
+    const dx = e.clientX - this._chipDragStart.cx;
+    const dy = e.clientY - this._chipDragStart.cy;
+
+    if (!this._chipIsDragging && Math.hypot(dx, dy) > 6) {
+      this._chipIsDragging = true;
+      const itemId = this._chipDragStart.itemId;
+      // Lift out of zone if already placed
+      if (this.isItemPlaced(itemId)) {
+        const p = { ...this.placements() };
+        Object.keys(p).forEach(k => { if (p[k] === itemId) delete p[k]; });
+        this.placements.set(p);
+      }
+      this.selectedDragId.set(null);
+    }
+
+    if (this._chipIsDragging) {
+      this.practiceDragItem.set({
+        itemId: this._chipDragStart.itemId,
+        label:  this._chipDragStart.label,
+        clientX: e.clientX,
+        clientY: e.clientY,
+      });
     }
   }
 
-  @HostListener('document:mouseup')
-  @HostListener('document:touchend')
-  onDocUp(): void {
-    this._drag = null;
+  @HostListener('document:pointerup', ['$event'])
+  onDocPointerUp(e: PointerEvent): void {
+
+    // Editor zone drag
+    if (this._editorDrag) {
+      this._editorDrag = null;
+      return;
+    }
+
+    // Practice chip drag
+    if (!this._chipDragStart) return;
+
+    if (this._chipIsDragging) {
+      // Find zone under pointer (ghost has pointer-events:none so elementFromPoint hits zones)
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const zoneEl = el?.closest('[data-zone-id]') as HTMLElement | null;
+      if (zoneEl && this.practiceState() === 'picking') {
+        const zoneId = zoneEl.dataset['zoneId'];
+        if (zoneId) {
+          const itemId = this._chipDragStart.itemId;
+          const p = { ...this.placements() };
+          Object.keys(p).forEach(k => { if (p[k] === itemId) delete p[k]; });
+          p[zoneId] = itemId;
+          this.placements.set(p);
+          this._justDropped = true;
+          setTimeout(() => this._justDropped = false, 100);
+        }
+      }
+      this.practiceDragItem.set(null);
+      this._chipIsDragging = false;
+    } else {
+      // Tap without drag → toggle chip selection
+      if (this.practiceState() === 'picking') {
+        const itemId = this._chipDragStart.itemId;
+        if (this.isItemPlaced(itemId)) {
+          const p = { ...this.placements() };
+          Object.keys(p).forEach(k => { if (p[k] === itemId) delete p[k]; });
+          this.placements.set(p);
+          this.selectedDragId.set(itemId);
+        } else {
+          this.selectedDragId.set(this.selectedDragId() === itemId ? null : itemId);
+        }
+      }
+    }
+
+    this._chipDragStart = null;
   }
 
   typeLabel(type: QuestionType): string {

@@ -14,6 +14,7 @@
   <div class="admin-tabs">
     <button [class.active]="tab() === 'requests'" (click)="setTab('requests')">Änderungsanträge</button>
     <button [class.active]="tab() === 'users'"    (click)="setTab('users')">Nutzer verwalten</button>
+    <button [class.active]="tab() === 'backup'"   (click)="setTab('backup')">Import / Export</button>
   </div>
 
   <!-- ── ÄNDERUNGSANTRÄGE ───────────────────────────────────────────────── -->
@@ -137,6 +138,58 @@
         }
       </div>
     }
+  }
+
+  <!-- ── IMPORT / EXPORT ──────────────────────────────────────────────────── -->
+  @if (tab() === 'backup') {
+
+    <!-- Export -->
+    <div class="backup-card">
+      <h3>Export</h3>
+      <p class="backup-desc">Alle Daten (Algorithmen + Fragen) als JSON herunterladen.</p>
+      <button class="btn primary" (click)="exportData()">Alles exportieren</button>
+      @if (exportMsg()) {
+        <div class="msg-banner">{{ exportMsg() }}</div>
+      }
+    </div>
+
+    <!-- Import -->
+    <div class="backup-card">
+      <h3>Import</h3>
+      <p class="backup-desc">JSON-Datei aus einem früheren Export laden und Daten importieren.</p>
+
+      <div class="import-row">
+        <label class="field-label">Was importieren?
+          <select class="inp" [(ngModel)]="importFilterStr">
+            <option value="all">Alles (Algorithmen + Fragen)</option>
+            <option value="algorithms">Nur Algorithmen</option>
+            <option value="questions">Nur Fragen</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="import-row">
+        <label class="upload-label">
+          <input type="file" accept=".json,application/json" style="display:none"
+                 (change)="onImportFile($event)" #importInput>
+          <span class="btn">{{ importFile ? 'Datei ändern' : 'JSON-Datei wählen' }}</span>
+        </label>
+        @if (importFile) {
+          <span class="file-name">{{ importFile!.name }}</span>
+        }
+      </div>
+
+      <button class="btn primary" [disabled]="!importFile" (click)="doImport()">Importieren</button>
+
+      @if (importMsg()) {
+        <div class="msg-banner" [class.error-banner]="importMsg().includes('fehlge')">{{ importMsg() }}</div>
+      }
+
+      <div class="import-warning">
+        Bestehende Einträge gleichen Schlüssels werden überschrieben.
+      </div>
+    </div>
+
   }
 
   } <!-- end @if isOnline -->

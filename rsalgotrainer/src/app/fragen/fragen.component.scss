@@ -209,6 +209,13 @@
     animation: pulse-border .8s ease-in-out infinite alternate;
   }
 
+  &.drag-over {
+    border-style: solid;
+    border-color: var(--lime);
+    background: rgba(204,255,51,.25);
+    box-shadow: 0 0 0 3px rgba(204,255,51,.4), 0 1px 8px rgba(0,0,0,.4);
+  }
+
   &.correct {
     border-color: #1a7a58;
     background: rgba(79,209,165,.92);
@@ -268,10 +275,12 @@
   background: var(--surface-2);
   color: var(--text);
   font-size: .85rem;
-  cursor: pointer;
+  cursor: grab;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
   transition: border-color .1s, opacity .1s;
+  touch-action: none;
+  user-select: none;
 
   &.active-chip {
     border-color: #4fa8ff;
@@ -281,12 +290,34 @@
 
   &.placed {
     opacity: .35;
-    cursor: default;
     text-decoration: line-through;
   }
 
-  &:disabled { cursor: default; }
+  &.dragging-out {
+    opacity: .25;
+    border-style: dashed;
+  }
+
+  &:disabled { cursor: default; opacity: .4; }
   &:hover:not(.placed):not(:disabled) { border-color: var(--lime); }
+}
+
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 2px solid var(--lime);
+  background: var(--surface);
+  color: var(--text);
+  font-size: .85rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  white-space: nowrap;
+  cursor: grabbing;
 }
 
 // ─── Editor ───────────────────────────────────────────────────────────────────

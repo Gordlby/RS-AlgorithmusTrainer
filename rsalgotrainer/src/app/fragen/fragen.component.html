@@ -82,11 +82,13 @@
                 <img [src]="q.image" class="dd-img" alt="Beschriftungsbild">
                 @for (zone of q.dropZones; track zone.id) {
                   <div class="drop-zone"
+                       [attr.data-zone-id]="zone.id"
                        [style.left.%]="zone.x"
                        [style.top.%]="zone.y"
                        [style.width.%]="zone.w"
                        [style.height.%]="zone.h"
                        [class.filled]="!!placements()[zone.id]"
+                       [class.drag-over]="practiceDragItem() !== null && !placements()[zone.id] && practiceState() === 'picking'"
                        [class.highlight-target]="selectedDragId() !== null && !placements()[zone.id] && practiceState() === 'picking'"
                        [class.correct]="practiceState() === 'checked' && placements()[zone.id] === zone.correctItemId"
                        [class.wrong]="practiceState() === 'checked' && !!placements()[zone.id] && placements()[zone.id] !== zone.correctItemId"
@@ -102,9 +104,9 @@
                 }
               </div>
 
-              @if (selectedDragId() !== null) {
+              @if (selectedDragId() !== null && practiceDragItem() === null) {
                 <div class="dd-selected-hint">
-                  „{{ getDragItemLabel(q, selectedDragId()) }}" ausgewählt – jetzt Zone anklicken
+                  „{{ getDragItemLabel(q, selectedDragId()) }}" ausgewählt – Zone antippen
                 </div>
               }
 
@@ -113,8 +115,9 @@
                   <button class="drag-chip"
                           [class.placed]="isItemPlaced(item.id)"
                           [class.active-chip]="selectedDragId() === item.id"
+                          [class.dragging-out]="practiceDragItem()?.itemId === item.id"
                           [disabled]="practiceState() === 'checked'"
-                          (click)="onDragItemClick(item.id)">
+                          (pointerdown)="onChipPointerDown($event, item.id, item.label)">
                     {{ item.label }}
                   </button>
                 }
@@ -137,6 +140,15 @@
         }
       }
     }
+  }
+
+  <!-- Drag ghost (fixed, follows pointer) -->
+  @if (practiceDragItem()) {
+    <div class="drag-ghost"
+         [style.left.px]="practiceDragItem()!.clientX"
+         [style.top.px]="practiceDragItem()!.clientY">
+      {{ practiceDragItem()!.label }}
+    </div>
   }
 
   <!-- ══════════════════ BEARBEITEN ══════════════════ -->
@@ -221,7 +233,7 @@
                   Auf Bild klicken → Zone platzieren &nbsp;·&nbsp; Zone ziehen → verschieben &nbsp;·&nbsp; ↘ ziehen → Größe ändern
                 </div>
                 <div class="dd-editor-wrap" #editorWrap
-                     [class.dragging]="dragging"
+                     [class.dragging]="editorDragging"
                      (click)="onImageClick($event, q.id, editorWrap)">
                   <img [src]="q.image" class="dd-img" alt="">
                   @for (zone of q.dropZones; track zone.id; let zi = $index) {
@@ -230,16 +242,14 @@
                          [style.top.%]="zone.y"
                          [style.width.%]="zone.w"
                          [style.height.%]="zone.h"
-                         (mousedown)="startZoneDrag($event, q.id, zone.id, 'move', editorWrap)"
-                         (touchstart)="startZoneDrag($event, q.id, zone.id, 'move', editorWrap)"
+                         (pointerdown)="startZoneDrag($event, q.id, zone.id, 'move', editorWrap)"
                          (click)="$event.stopPropagation()">
                       <span class="zone-num">{{ zi + 1 }}</span>
                       <button class="del-zone-btn"
-                              (mousedown)="$event.stopPropagation()"
+                              (pointerdown)="$event.stopPropagation()"
                               (click)="$event.stopPropagation(); qdata.deleteDropZone(fcId()!, q.id, zone.id)">✕</button>
                       <div class="resize-handle"
-                           (mousedown)="$event.stopPropagation(); startZoneDrag($event, q.id, zone.id, 'resize', editorWrap)"
-                           (touchstart)="$event.stopPropagation(); startZoneDrag($event, q.id, zone.id, 'resize', editorWrap)">
+                           (pointerdown)="$event.stopPropagation(); startZoneDrag($event, q.id, zone.id, 'resize', editorWrap)">
                       </div>
                     </div>
                   }

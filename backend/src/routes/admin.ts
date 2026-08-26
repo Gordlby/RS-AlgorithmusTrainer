@@ -132,6 +132,7 @@ router.get('/export', (_req: Request, res: Response): void => {
     index: unknown;
     mnemonics: unknown;
     questions: Record<string, unknown>;
+    poolIndex: unknown;
   } = {
     version: 2,
     exportedAt: new Date().toISOString(),
@@ -139,6 +140,7 @@ router.get('/export', (_req: Request, res: Response): void => {
     index: [],
     mnemonics: [],
     questions: {},
+    poolIndex: [],
   };
 
   for (const row of rows) {
@@ -148,6 +150,8 @@ router.get('/export', (_req: Request, res: Response): void => {
         result.index = parsed;
       } else if (row.key === 'v2-mnemonics') {
         result.mnemonics = parsed;
+      } else if (row.key === 'v2-pool-index') {
+        result.poolIndex = parsed;
       } else if (row.key.startsWith('v2-fc:')) {
         result.algorithms.push(parsed);
       } else if (row.key.startsWith('v2-qset:')) {
@@ -209,6 +213,10 @@ router.post('/import', (req: Request, res: Response): void => {
       }
       if (body.mnemonics !== undefined) {
         upsert.run('v2-mnemonics', JSON.stringify(body.mnemonics));
+        count++;
+      }
+      if (body.poolIndex !== undefined) {
+        upsert.run('v2-pool-index', JSON.stringify(body.poolIndex));
         count++;
       }
       if (Array.isArray(body.algorithms)) {

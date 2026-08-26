@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AlgoDataService } from '../services/algo-data.service';
 import { AuthService } from '../services/auth.service';
 import { QuestionDataService } from '../services/question-data.service';
+import { PoolDataService } from '../services/pool-data.service';
 import { MatchPair, Question, QuestionType } from '../models/question';
 
 type PracticeState = 'picking' | 'checked' | 'done';
@@ -35,9 +36,10 @@ interface ChipDragStart {
   styleUrl: './fragen.component.scss'
 })
 export class FragenComponent {
-  data  = inject(AlgoDataService);
-  auth  = inject(AuthService);
-  qdata = inject(QuestionDataService);
+  data     = inject(AlgoDataService);
+  auth     = inject(AuthService);
+  qdata    = inject(QuestionDataService);
+  poolData = inject(PoolDataService);
 
   tab = signal<'ueben' | 'bearbeiten'>('ueben');
 
@@ -114,7 +116,7 @@ export class FragenComponent {
   ], null, 2);
 
   // ── Computed ─────────────────────────────────────────────────────────────────
-  readonly fcId = computed(() => this.data.currentId());
+  readonly fcId = computed(() => this.poolData.currentPoolId() ?? this.data.currentId());
 
   readonly questions = computed(() => {
     const id = this.fcId();

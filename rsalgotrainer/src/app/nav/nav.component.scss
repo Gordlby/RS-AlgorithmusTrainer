@@ -167,6 +167,124 @@ h1 {
   }
 }
 
+// ── Fragenpools ──────────────────────────────────────────────────────────────
+
+.pool-section {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-bottom: 4px;
+}
+
+.pool-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pool-section-label {
+  font-size: .65rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  letter-spacing: .08em;
+}
+
+.pool-action-btn {
+  font-size: .72rem;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  padding: .1rem .5rem;
+  cursor: pointer;
+  &:hover { border-color: var(--lime); color: var(--lime); }
+}
+
+.pool-list { display: flex; flex-direction: column; gap: 3px; }
+
+.pool-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+
+  &.active .pool-btn {
+    border-color: #4fa8ff;
+    background: rgba(79,168,255,.1);
+    color: #4fa8ff;
+  }
+}
+
+.pool-btn {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: .82rem;
+  padding: .3rem .7rem;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  &:hover { border-color: #4fa8ff; color: #4fa8ff; }
+}
+
+.pool-icon-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: .78rem;
+  padding: 3px 5px;
+  &:hover { color: var(--lime); }
+}
+
+.pool-del-btn:hover { color: #ff4d3d !important; }
+
+.pool-create-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.pool-inp {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: .82rem;
+  padding: .28rem .65rem;
+  &:focus { outline: none; border-color: var(--lime); }
+  &::placeholder { color: var(--muted); }
+}
+
+.pool-inp-inline { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+
+.pool-ok-btn {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: .75rem;
+  padding: .15rem .45rem;
+  &:hover { border-color: var(--lime); color: var(--lime); }
+}
+
+.pool-active-tab { position: relative; }
+
+.pool-tab-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4fa8ff;
+  margin-left: 5px;
+  vertical-align: middle;
+  margin-top: -2px;
+}
+
 @media (max-width: 600px) {
   .wrap { padding: 12px 12px 0; }
 

@@ -38,11 +38,13 @@
     </div>
   </div>
 
-  <h1>{{ data.currentFc()?.title || 'Algorithmen-Trainer' }}</h1>
-  <p class="subtitle">
-    Baue echte Flowcharts mit Entscheidungsästen (Ja/Nein) und Verweisen auf andere Algorithmen —
-    Quiz und Karteikarten leiten sich automatisch daraus ab.
-  </p>
+  <h1>{{ displayTitle() }}</h1>
+  @if (!poolData.currentPoolId()) {
+    <p class="subtitle">
+      Baue echte Flowcharts mit Entscheidungsästen (Ja/Nein) und Verweisen auf andere Algorithmen —
+      Quiz und Karteikarten leiten sich automatisch daraus ab.
+    </p>
+  }
 
   <!-- Algorithm selector -->
   <div class="fc-select-row">
@@ -57,13 +59,67 @@
     }
   </div>
 
+  <!-- Fragenpools -->
+  <div class="pool-section">
+    <div class="pool-section-head">
+      <span class="pool-section-label">FRAGENPOOLS</span>
+      @if (auth.isAdmin() && !showNewPool()) {
+        <button class="pool-action-btn" (click)="showNewPool.set(true)">+ Neu</button>
+      }
+    </div>
+
+    @if (showNewPool()) {
+      <div class="pool-create-row">
+        <input class="pool-inp" type="text"
+               [value]="newPoolName()"
+               (input)="newPoolName.set($any($event.target).value)"
+               placeholder="Pool-Name…"
+               (keydown.enter)="createPool()"
+               (keydown.escape)="showNewPool.set(false); newPoolName.set('')">
+        <button class="pool-ok-btn" (click)="createPool()">✓</button>
+        <button class="pool-ok-btn" (click)="showNewPool.set(false); newPoolName.set('')">✕</button>
+      </div>
+    }
+
+    <div class="pool-list">
+      @for (pool of poolData.pools(); track pool.id) {
+        <div class="pool-item" [class.active]="poolData.currentPoolId() === pool.id">
+
+          @if (editingPoolId() === pool.id) {
+            <input class="pool-inp pool-inp-inline" type="text"
+                   [value]="editingPoolName()"
+                   (input)="editingPoolName.set($any($event.target).value)"
+                   (keydown.enter)="saveRenamePool()"
+                   (keydown.escape)="editingPoolId.set(null)">
+            <button class="pool-ok-btn" (click)="saveRenamePool()">✓</button>
+            <button class="pool-ok-btn" (click)="editingPoolId.set(null)">✕</button>
+          } @else {
+            <button class="pool-btn" (click)="selectPool(pool.id)">
+              {{ pool.name }}
+            </button>
+            @if (auth.isAdmin()) {
+              <button class="pool-icon-btn" title="Umbenennen"
+                      (click)="startRenamePool(pool.id, pool.name)">✏</button>
+              <button class="pool-icon-btn pool-del-btn" title="Löschen"
+                      (click)="deletePool(pool.id)">✕</button>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
   <!-- Tab navigation -->
   <nav class="tabs">
     @for (tab of tabs; track tab.path) {
       <a class="tab-btn"
          [routerLink]="tab.path"
-         routerLinkActive="active">
+         routerLinkActive="active"
+         [class.pool-active-tab]="tab.path === 'fragen' && !!poolData.currentPoolId()">
         {{ tab.label }}
+        @if (tab.path === 'fragen' && poolData.currentPoolId()) {
+          <span class="pool-tab-dot"></span>
+        }
       </a>
     }
   </nav>

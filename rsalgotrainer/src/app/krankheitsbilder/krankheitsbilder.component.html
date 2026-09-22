@@ -1,0 +1,281 @@
+<div class="wrap">
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- LISTE MODE                                                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  @if (mode() === 'liste') {
+
+    <div class="top-bar">
+      <div class="kat-filter">
+        <button class="filter-chip" [class.active]="filterKat() === null" (click)="filterKat.set(null)">Alle</button>
+        @for (kat of data.kategorien(); track kat) {
+          <button class="filter-chip" [class.active]="filterKat() === kat" (click)="filterKat.set(kat)">{{ kat }}</button>
+        }
+      </div>
+      @if (auth.isAdmin()) {
+        <button class="btn primary" (click)="addNew()">+ Neuer Fall</button>
+      }
+    </div>
+
+    @if (filteredListe().length === 0) {
+      <p class="empty-hint">Noch keine Krankheitsbilder vorhanden. Admins können über „+ Neuer Fall" welche anlegen.</p>
+    }
+
+    <div class="kb-grid">
+      @for (kb of filteredListe(); track kb.id) {
+        <div class="kb-card">
+          @if (kb.kategorie) {
+            <span class="kb-kat">{{ kb.kategorie }}</span>
+          }
+          <p class="kb-scenario">{{ kb.scenario || '(Kein Szenario)' }}</p>
+          <div class="kb-actions">
+            <button class="btn primary" (click)="startQuiz(kb.id)">Fall starten</button>
+            @if (auth.isAdmin()) {
+              <button class="btn" (click)="editKb(kb.id)">Bearbeiten</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- QUIZ MODE                                                              -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  @if (mode() === 'quiz') {
+    @if (current(); as kb) {
+
+      <div class="quiz-topbar">
+        <button class="btn back-btn" (click)="back()">← Zurück</button>
+        <div class="quiz-progress">
+          {{ revealedCount() }} / {{ totalItems() }} aufgedeckt
+        </div>
+        <button class="btn" (click)="resetQuiz()">Neustart</button>
+      </div>
+
+      <!-- Scenario -->
+      @if (kb.scenario) {
+        <div class="scenario-box">
+          <span class="scenario-label">Szenario</span>
+          <p class="scenario-text">{{ kb.scenario }}</p>
+        </div>
+      }
+
+      <!-- Sections accordion -->
+      <div class="sections">
+        @for (section of kb.sections; track section.id) {
+          <div class="section-panel" [class.open]="isSectionOpen(section.id)">
+
+            <button class="section-header" (click)="toggleSection(section.id)">
+              <img class="section-icon" [src]="sectionIcon(section.group)" [alt]="groupLabel[section.group]">
+              <span class="section-title">{{ groupLabel[section.group] }}</span>
+              <span class="section-count">
+                {{ sectionRevealedCount(section) }}/{{ section.items.length }}
+              </span>
+              <span class="section-chevron">{{ isSectionOpen(section.id) ? '▲' : '▼' }}</span>
+            </button>
+
+            @if (isSectionOpen(section.id)) {
+              <div class="section-items">
+                @for (item of section.items; track item.id) {
+                  <div class="exam-item"
+                       [class.revealed]="isRevealed(item.id)"
+                       (click)="!isRevealed(item.id) && reveal(item.id)">
+
+                    @if (item.iconKey) {
+                      <img class="item-icon" [src]="iconPath(item.iconKey)" [alt]="item.label">
+                    }
+
+                    <div class="item-content">
+                      <span class="item-label">{{ item.label }}</span>
+                      @if (isRevealed(item.id)) {
+                        <span class="item-value">{{ item.value || '–' }}</span>
+                      } @else {
+                        <span class="item-hint">Tippen zum Aufdecken</span>
+                      }
+                    </div>
+
+                    @if (isRevealed(item.id)) {
+                      <span class="item-check">✓</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Reveal all -->
+      @if (!allRevealed()) {
+        <button class="btn reveal-all-btn" (click)="revealAll()">Alle aufdecken</button>
+      }
+
+      <!-- Diagnosis phase -->
+      <div class="diagnosis-box" [class.submitted]="diagnosisSubmitted()">
+        <h3 class="diagnosis-title">Ihre Diagnose</h3>
+
+        @if (!diagnosisSubmitted()) {
+          <div class="diagnosis-input-row">
+            <input class="inp" type="text"
+                   placeholder="Krankheitsbild eingeben…"
+                   [ngModel]="diagnosisInput()"
+                   (ngModelChange)="diagnosisInput.set($event)"
+                   (keydown.enter)="submitDiagnosis()">
+            <button class="btn primary" (click)="submitDiagnosis()">Bestätigen</button>
+          </div>
+        }
+
+        @if (diagnosisSubmitted()) {
+          <div class="diagnosis-result">
+            <div class="your-guess">
+              <span class="guess-label">Ihre Antwort:</span>
+              <span class="guess-text">{{ diagnosisInput() }}</span>
+            </div>
+            <div class="correct-answer">
+              <span class="answer-label">Richtige Diagnose:</span>
+              <span class="answer-text">{{ kb.name }}</span>
+            </div>
+            @if (guessCorrect() === true) {
+              <div class="result-badge correct">✓ Richtig!</div>
+            } @else if (guessCorrect() === false) {
+              <div class="result-badge wrong">✗ Nicht ganz – weiter üben!</div>
+            }
+            @if (kb.hinweise) {
+              <div class="hinweise-box">
+                <span class="hinweise-label">Hinweise:</span>
+                <p class="hinweise-text">{{ kb.hinweise }}</p>
+              </div>
+            }
+            <button class="btn primary mt" (click)="resetQuiz()">Nochmal</button>
+          </div>
+        }
+      </div>
+
+    }
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- BEARBEITEN MODE                                                        -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  @if (mode() === 'bearbeiten') {
+    @if (current(); as kb) {
+
+      <div class="edit-topbar">
+        <button class="btn back-btn" (click)="back()">← Zurück</button>
+        <div class="edit-status">
+          @if (data.saveStatus() === 'saving')  { <span class="st saving">Speichern…</span> }
+          @if (data.saveStatus() === 'saved')   { <span class="st saved">Gespeichert ✓</span> }
+          @if (data.saveStatus() === 'pending') { <span class="st pending">Antrag ⏳</span> }
+          @if (data.saveStatus() === 'error')   { <span class="st error">Fehler</span> }
+        </div>
+        <button class="btn danger" (click)="removeKb()">Löschen</button>
+        <button class="btn primary" (click)="saveAll()">Speichern</button>
+      </div>
+
+      <!-- Basic info -->
+      <div class="edit-card">
+        <div class="edit-row">
+          <label class="grow">
+            Diagnose / Krankheitsbild
+            <input class="inp" [value]="kb.name" (input)="onNameChange($event)" placeholder="z.B. Herzinfarkt">
+          </label>
+          <label>
+            Kategorie
+            <input class="inp" [value]="kb.kategorie" (input)="onKatChange($event)"
+                   placeholder="z.B. Kardial" list="kat-list">
+            <datalist id="kat-list">
+              @for (kat of data.kategorien(); track kat) {
+                <option [value]="kat"></option>
+              }
+            </datalist>
+          </label>
+        </div>
+        <label>
+          Szenario (wird dem Lernenden zu Beginn angezeigt)
+          <textarea class="inp textarea" rows="3"
+                    [value]="kb.scenario"
+                    (input)="onScenarioChange($event)"
+                    placeholder="z.B. Patient (m, 52J) klagt über plötzlich auftretenden Brustschmerz…"></textarea>
+        </label>
+        <label>
+          Hinweise nach Auflösung (optional)
+          <textarea class="inp textarea" rows="2"
+                    [value]="kb.hinweise ?? ''"
+                    (input)="onHinweiseChange($event)"
+                    placeholder="z.B. Typisches EKG-Bild, Troponin erhöht…"></textarea>
+        </label>
+      </div>
+
+      <!-- Sections -->
+      @for (section of kb.sections; track section.id; let si = $index) {
+        <div class="edit-section-panel">
+
+          <div class="edit-section-header">
+            <img class="section-icon" [src]="sectionIcon(section.group)" [alt]="groupLabel[section.group]">
+            <span class="section-title">{{ groupLabel[section.group] }}</span>
+            <button class="del-btn" (click)="removeSection(section.id)" title="Abschnitt löschen">✕</button>
+          </div>
+
+          <div class="edit-items">
+            @for (item of section.items; track item.id) {
+              <div class="edit-item-row">
+
+                <!-- Icon picker toggle -->
+                <div class="icon-cell" (click)="showIconPicker.set(showIconPicker() === item.id ? null : item.id)" title="Icon wählen">
+                  @if (item.iconKey) {
+                    <img class="item-icon-sm" [src]="iconPath(item.iconKey)" [alt]="item.iconKey">
+                  } @else {
+                    <span class="icon-placeholder">☐</span>
+                  }
+                </div>
+
+                <!-- Icon picker popover -->
+                @if (showIconPicker() === item.id) {
+                  <div class="icon-picker">
+                    @for (ic of rsIcons; track ic.key) {
+                      <button class="icon-pick-btn"
+                              [class.selected]="item.iconKey === ic.key"
+                              [title]="ic.label"
+                              (click)="setItemIcon(section.id, item.id, ic.key)">
+                        <img [src]="iconPath(ic.key)" [alt]="ic.label">
+                      </button>
+                    }
+                  </div>
+                }
+
+                <input class="inp label-inp" [value]="item.label"
+                       (input)="onItemLabelChange(section.id, item.id, $event)"
+                       placeholder="Bezeichnung (z.B. Blutdruck)">
+                <input class="inp value-inp" [value]="item.value"
+                       (input)="onItemValueChange(section.id, item.id, $event)"
+                       placeholder="Befund / Wert">
+                <button class="del-btn" (click)="removeItem(section.id, item.id)">✕</button>
+              </div>
+            }
+            <button class="btn btn-sm" (click)="addItem(section.id)">+ Zeile</button>
+          </div>
+        </div>
+      }
+
+      <!-- Add section -->
+      <div class="add-section-row">
+        <span class="add-label">Abschnitt hinzufügen:</span>
+        <div class="group-btns">
+          @for (g of groupOptions; track g) {
+            <button class="btn btn-sm group-btn" (click)="addSection(g)">
+              <img class="btn-icon" [src]="sectionIcon(g)" [alt]="groupLabel[g]">
+              {{ groupLabel[g] }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="edit-footer">
+        <button class="btn primary" (click)="saveAll()">Speichern</button>
+        <button class="btn" (click)="back()">Abbrechen</button>
+      </div>
+
+    }
+  }
+</div>

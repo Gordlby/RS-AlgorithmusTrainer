@@ -8,6 +8,7 @@ import { FlowchartComponent } from './flowchart/flowchart.component';
 import { AdminRequestsComponent } from './admin-requests/admin-requests.component';
 import { KuerzelComponent } from './kuerzel/kuerzel.component';
 import { FragenComponent } from './fragen/fragen.component';
+import { KrankheitsbilderComponent } from './krankheitsbilder/krankheitsbilder.component';
 
 export const routes: Routes = [
   {
@@ -15,13 +16,14 @@ export const routes: Routes = [
     component: InitcontComponent,
     children: [
       { path: '', redirectTo: 'editor', pathMatch: 'full' },
-      { path: 'editor',    component: AlgoeditorComponent },
-      { path: 'karten',    component: AlgokartenComponent },
-      { path: 'quiz',      component: AlgoquizComponent },
-      { path: 'flowchart', component: FlowchartComponent },
-      { path: 'anfragen',  component: AdminRequestsComponent },
-      { path: 'kuerzel',   component: KuerzelComponent },
-      { path: 'fragen',    component: FragenComponent },
+      { path: 'editor',          component: AlgoeditorComponent },
+      { path: 'karten',          component: AlgokartenComponent },
+      { path: 'quiz',            component: AlgoquizComponent },
+      { path: 'flowchart',       component: FlowchartComponent },
+      { path: 'anfragen',        component: AdminRequestsComponent },
+      { path: 'kuerzel',         component: KuerzelComponent },
+      { path: 'fragen',          component: FragenComponent },
+      { path: 'krankheitsbilder', component: KrankheitsbilderComponent },
     ]
   },
   { path: '**', component: ErrorpageComponent }

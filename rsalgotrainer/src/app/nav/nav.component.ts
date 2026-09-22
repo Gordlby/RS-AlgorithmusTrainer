@@ -32,12 +32,13 @@ export class NavComponent {
   );
 
   readonly tabs = [
-    { label: 'Editor',       path: 'editor'    },
-    { label: 'Flowchart',    path: 'flowchart' },
-    { label: 'Quiz',         path: 'quiz'      },
-    { label: 'Karteikarten', path: 'karten'    },
-    { label: 'Kürzel',       path: 'kuerzel'   },
-    { label: 'Fragen',       path: 'fragen'    },
+    { label: 'Editor',           path: 'editor'           },
+    { label: 'Flowchart',        path: 'flowchart'        },
+    { label: 'Quiz',             path: 'quiz'             },
+    { label: 'Karteikarten',     path: 'karten'           },
+    { label: 'Kürzel',           path: 'kuerzel'          },
+    { label: 'Fragen',           path: 'fragen'           },
+    { label: 'Krankheitsbilder', path: 'krankheitsbilder' },
   ];
 
   onSelect(event: Event): void {

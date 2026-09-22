@@ -20,7 +20,7 @@ export const EXAM_GROUP_LABEL: Record<ExamGroup, string> = {
 };
 
 export const EXAM_GROUP_ICON: Record<ExamGroup, string> = {
-  vital:      'pat_all',
+  vital:      'stetoskop',
   befund:     'pat_erscheinungsbild',
   sampler:    'merkhilfe_sampler',
   opqrst:     'merkhilfe_opqrst',

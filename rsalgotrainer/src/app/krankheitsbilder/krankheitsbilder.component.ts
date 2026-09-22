@@ -157,7 +157,7 @@ export class KrankheitsbilderComponent {
   }
 
   iconPath(key: string): string {
-    return `assets/icons/rs/${key}.png`;
+    return `icons/rs/${key}.png`;
   }
 
   sectionIcon(group: ExamGroup): string {
